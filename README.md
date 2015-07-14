@@ -1,12 +1,8 @@
 # Darter
-Darter is a effort to create a simple framework that embraces all REST principles, as proposed by Roy Fielding in his thesis. You can say that there're good frameworks in this area, like Redstone.dart and RPC by Google. However, those frameworks impose some limitations that are really frustrating and go against some core REST principles.
+Darter is an effort to create a simple and efficient framework in the Dart Language that embraces all REST principles, as proposed by Roy Fielding in his thesis. Darter doesn't impose annoying limitations that you'll find in the available Dart libraries, like forcing you to use only one versioning strategy (through the URI, for example). Darter is straightforward and really easy to setup as you'll see in our documentation and examples.
 
-For example, RPC doesn't have a good mechanism to handle API versioning. The only strategy available forces you to inform the version at the URI. Nevertheless remember that the URI should be used only to address resources. What about Redstone? It's an amazing tool but it wasn't created with API development in mind. With Redstone you can't even work with versions because of its internal implementation that restricts us from having the same route handled by different classes/objects.
-
-Going further, RPC doesn't have the HTTP PATCH method but has a @AddAll annotation representing a method. What doesn't make any sense. I could cite many other problems but I think I've made my point here.
-
-## Why you should use Darter?
-Because you want flexibility to implement your API using all REST principles. We think that you shouldn't be limited by a framework. Instead, it should empower you with compeling tools that help you to create amazing REST APIs.
+## Why should I use Darter?
+Because you want flexibility to implement your API using all REST principles. We believe that you shouldn't be limited by a framework when building a new application. Instead, it should empower you with compeling tools that help you to create amazing REST APIs.
 
 ## Darter by Example
 Darter is really simple. To convince you of it, lets create a simple example. First off, create your `pubspec.yaml` file and create a dependency to Darter inside it.
@@ -14,41 +10,34 @@ Darter is really simple. To convince you of it, lets create a simple example. Fi
     dependencies:
         darter: any
 
-Now, create a file named `main.dart` in the root directory of your project:
+Now, create a file named `main.dart` in the root directory of your project, create a class with a name of your choice and to it the `@API` annotation:
 
     import 'package:darter/darter.dart';
 
-    @API(path: 'categories', format: JSON)
-    @Version(version: 'v1', vendor: 'company', format: 'json')
+    @API(path: 'categories')
+    @Version(version: 'v1', vendor: 'company', format: Format.JSON, using: Using.HEADER)
     class MyDarterAPI {
     
-        @Before()
-        void before(Request request) {
-            // Lets do something before calling each method below.
-            // For example, you can validate if the user has permission to access this API.
-        }
-        
-        @After()
-        void after() {
-            // Lets do something after calling each method below.
-        }
-        
         @GET()
         List<MyModel> list() {
             ...
         }
         
         @GET(path: ':id')
-        MyModel get(PathParams params) {
-            return new MyModel();
+        MyModel get(Map pathParams) {
+            return MyModel.findById(pathParams['id']);
         }
         
         @PUT(path: ':id')
         Response put(PathParams params, MyModel myModel) {
             if(MyModel.get(params.get("id")) == null) {
-              return Response.status(201).entity("Created");
+              return new Response
+                 ..statusCode == 201
+                 ..entity = "Created";
             } else {
-              return Response.status(200).entity("Updated");
+              return new Response
+                 ..statusCode == 200
+                 ..entity = "Updated";
             }
         }
         
@@ -56,13 +45,80 @@ Now, create a file named `main.dart` in the root directory of your project:
         MyModel post(MyModel myModel) {
         }
         
+        @DELETE(path: 'id')
+        void delete(Map pathParams) {
+            MyModel.get(pathParams['id']).delete();
+        }
     }
     
     main() {
-        DarterServer server = new DarterServer();
-        server.add(new MyDarterAPI());
-        server.start();
+        new DarterServer()
+            ..addApi(new MyDarterAPI())
+            ..start();
     }
     
+This annotation receives only one argument that informs the base path to this API.
+
+## Interceptors
+Interceptors are useful to implement features like authentication, cors, and body transformations. For example, create an interceptor if you want to intercept a request before your resource method has been called and check if the user has authorization to access this resource. 
+
+You define an interceptor using the `@Interceptor` annotation and defining `when` it must be called (`Interceptor.BEFORE` or `Interceptor.AFTER`) and its `priority` in the chain. Observe that your annotated class must have a method named `intercept` receiving only one argument of the type `Chain` as in the example below.
+
+    @Interceptor(when: Interceptor.AFTER, priority: 0)
+    class Cors {
+    
+        void intercept(Chain chain) {
+            chain.response.headers["Access-Control-Allow-Origin"] = "*";
+            chain.response.headers["Access-Control-Allow-Credentials"] = "true";
+            chain.response.headers["Access-Control-Allow-Methods"] = "GET, POST, DELETE, PUT";
+            chain.response.headers["Access-Control-Allow-Headers"] = "*";
+        }
+        
+    }
+
+In an Intercept you're allowd to manipulate the headers, as pointed in the example above. You're able even to abort the execution before your resource method has been called. L
+
+    @Interceptor(when:Interceptor.BEFORE, priority: 1)
+    class Authentication {
+        
+        void intercept(Chain chain) {
+            String token = chain.request.headers["X-Token"];
+            if (token != "Test") {
+              chain.abort(new Response()
+                ..body = "{\"error\":\"Permission Denied\"}"
+                ..statusCode = 401);
+            }
+        }
+    }
+    
+## Path Parameters
+In order to get access to all path parameters, you must add an argument of the type Map and named `pathParams` in your resource method. Notice that it's a convention and therefore this parameter must be named like that.
+
+    @DELETE(path: 'id')
+    void delete(Map pathParams) {
+        MyModel.get(pathParams['id']).delete();
+    }
+    
+## Query Parameters
+The same happens with the Query Parameters. You can access it adding an argument of the type Map and named `queryParams`.
+    @GET()
+    List<MyModel> list(Map queryParams) {
+    }
+
+## Versioning
+Darter allows you to choose two versioning strategies: Path or Header. In the Path strategy, the version is provided in the URI, like in `http://domain/<version>`. To use this strategy, use the the `@Version` annotation with the `using` attribute setted to `Using.HEADER`.
+    
+    @API(path: 'categories')
+    @Version(version: 'v1', using: Using.PATH)
+    class MyDarterAPI {
+    }
+    
+In the other hand, the header strategy searches the `Accept` header for the version. Notice that you must follow the a convention to create your Accept header. It must be something like `application/vnd.<vendor>.<version>+<format>`. We didn't invent it, it's in the RFC! Therefore, when you choose the Header strategy, you are forced to declare three more parameters to the `@Version` annotation: `vendor`, `version`, and `format`.
+
+    @API(path: 'categories')
+    @Version(version: 'v1', vendor: 'company', format: Format.JSON, using: Using.HEADER)
+    class MyDarterAPI {
+    }
+
 ## Is it ready for production?
-Not yet. This project is in early stages. But if you liked it, contact us and help us create an amazing REST-like framework!
+Not yet. This project is in early stages. But if you liked it, contact us and help us create an amazing REST framework!
