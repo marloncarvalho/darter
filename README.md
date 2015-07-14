@@ -76,7 +76,7 @@ You define an interceptor using the `@Interceptor` annotation and defining `when
         
     }
 
-In an Intercept you're allowd to manipulate the headers, as pointed in the example above. You're able even to abort the execution before your resource method has been called. L
+You can do a lot of things in your interceptor including manipulate the request headers, as pointed in the example above. You're even able to abort the execution before your resource method has been called.
 
     @Interceptor(when:Interceptor.BEFORE, priority: 1)
     class Authentication {
@@ -92,7 +92,7 @@ In an Intercept you're allowd to manipulate the headers, as pointed in the examp
     }
     
 ## Path Parameters
-In order to get access to all path parameters, you must add an argument of the type Map and named `pathParams` in your resource method. Notice that it's a convention and therefore this parameter must be named like that.
+In order to get access to all path parameters, you must add an argument of the type Map in your resource method and name it `pathParams`. Notice that it's a convention and therefore this parameter must be named like that.
 
     @DELETE(path: 'id')
     void delete(Map pathParams) {
@@ -113,7 +113,7 @@ Darter allows you to choose two versioning strategies: Path or Header. In the Pa
     class MyDarterAPI {
     }
     
-In the other hand, the header strategy searches the `Accept` header for the version. Notice that you must follow the a convention to create your Accept header. It must be something like `application/vnd.<vendor>.<version>+<format>`. We didn't invent it, it's in the RFC! Therefore, when you choose the Header strategy, you are forced to declare three more parameters to the `@Version` annotation: `vendor`, `version`, and `format`.
+In the other hand, the header strategy searches the `Accept` header for the version. Notice that you must follow a convention to create this header. It must be something like `application/vnd.<vendor>.<version>+<format>`. We didn't invent it, it's in the RFC! Therefore, when you choose the Header strategy, you are forced to declare three more parameters to the `@Version` annotation: `vendor`, `version`, and `format`.
 
     @API(path: 'categories')
     @Version(version: 'v1', vendor: 'company', format: Format.JSON, using: Using.HEADER)
