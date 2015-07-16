@@ -137,8 +137,8 @@ class Parser {
         String consume = api.consume;
         String produce = api.produce;
         if (mediaType != null) {
-          consume = (mediaType.consume == null ? MediaType.JSON : mediaType.consume);
-          produce = (mediaType.produce == null ? MediaType.JSON : mediaType.produce);
+          consume = (mediaType.consume == null ? api.consume : mediaType.consume);
+          produce = (mediaType.produce == null ? api.produce : mediaType.produce);
         }
 
         Path p = api.path.join(new Path.fromString((m.path == null ? "" : m.path)));

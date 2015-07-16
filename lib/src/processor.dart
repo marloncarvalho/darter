@@ -63,13 +63,18 @@ class Processor {
       }
     }
 
-    _setContentHeaders(result);
+    _setContentHeaders(result, method);
 
     return result;
   }
 
-  void _setContentHeaders(Response response) {
-    response.headers[HttpHeaders.CONTENT_TYPE] = CONTENT_TYPE_JSON;
+  void _setContentHeaders(Response response, ApiMethod apiMethod) {
+    if (apiMethod.produce != null) {
+      response.headers[HttpHeaders.CONTENT_TYPE] = apiMethod.produce;
+    } else {
+      response.headers[HttpHeaders.CONTENT_TYPE] = CONTENT_TYPE_JSON;
+    }
+
     response.headers[HttpHeaders.CONTENT_LENGTH] = response.body.length.toString();
   }
 
