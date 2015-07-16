@@ -9,6 +9,23 @@ class Reflector {
     return reflect(object).invoke(method, params).reflectee;
   }
 
+  dynamic search(MethodMirror methodMirror, List annotations) {
+    var result = null;
+
+    for (var instance in methodMirror.metadata) {
+      if (instance.hasReflectee) {
+        for (var a in annotations) {
+          if (instance.reflectee.runtimeType == a) {
+            result = instance.reflectee;
+            break;
+          }
+        }
+      }
+    }
+
+    return result;
+  }
+
   Object getAnnotation(Object obj, Type annotationType) {
     var result = null;
     ClassMirror classMirror = reflectClass(obj.runtimeType);
@@ -29,8 +46,8 @@ class Reflector {
     ClassMirror cm = reflectClass(object.runtimeType);
     bool result = false;
 
-    for(MethodMirror mm in cm.instanceMembers.values) {
-      if(mm.simpleName == method) {
+    for (MethodMirror mm in cm.instanceMembers.values) {
+      if (mm.simpleName == method) {
         result = true;
         break;
       }

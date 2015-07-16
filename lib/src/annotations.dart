@@ -70,6 +70,7 @@ class ErrorHandler {
 
 class Method {
   final String path;
+
   const Method({this.path});
 }
 
@@ -106,6 +107,17 @@ class DELETE extends Method {
  */
 class PATCH extends Method {
   const PATCH({path}):super(path:path);
+}
+
+class MediaType {
+  static const String JSON = 'application/json';
+  static const String XML = 'application/xml';
+  static const String IMAGE_PNG = 'image/png';
+
+  final String produce;
+  final String consume;
+
+  const MediaType({this.produce, this.consume});
 }
 
 class Before {

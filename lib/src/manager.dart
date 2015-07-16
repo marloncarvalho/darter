@@ -1,6 +1,7 @@
 library darter.manager;
 
 import 'dart:async';
+import 'dart:io';
 import 'package:darter/src/metadata/api.dart';
 import 'package:darter/src/path.dart';
 import 'package:darter/src/http.dart';
@@ -66,7 +67,6 @@ class Manager {
     List<ApiMethod> list = null;
     bool hasPathsForVersion = false;
 
-    // What should we do when the user doesn't inform the version?
     ApiVersion version = _extractVersion(request);
     if (_versions.containsKey(version.version)) {
       PathTree pathTree = _versions[version.version];
@@ -96,7 +96,11 @@ class Manager {
     } else if (list != null && list.length > 0 && apiMethod == null) {
       return _processor.processMethodNowAllowed();
     } else {
-      return _process(request, apiMethod);
+      if(apiMethod.consume != request.headers[HttpHeaders.CONTENT_TYPE]) {
+        return _processor.processContentTypeNotAccepted(request.headers[HttpHeaders.CONTENT_TYPE]);
+      } else {
+        return _process(request, apiMethod);
+      }
     }
   }
 

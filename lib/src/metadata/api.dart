@@ -4,12 +4,14 @@ import 'package:darter/src/path.dart';
 
 class Api {
   dynamic object;
+  String consume;
+  String produce;
   Path path;
   List<ApiMethod> methods = [];
   String format;
   ApiVersion version;
 
-  Api({this.object, this.path, this.format});
+  Api({this.object, this.path, this.format, this.consume, this.produce});
 }
 
 class ApiInterceptor {
@@ -30,13 +32,15 @@ class ApiVersion {
 }
 
 class ApiMethod {
+  String consume;
+  String produce;
   Api apiMeta;
   Symbol name;
   List parameters = [];
   Path path;
   String method;
 
-  ApiMethod({this.apiMeta, this.name, this.path, this.method});
+  ApiMethod({this.apiMeta, this.name, this.path, this.method, this.consume, this.produce});
 
   Map getParamsFromURI(String uri) {
     Map result = new Map<String, String>();

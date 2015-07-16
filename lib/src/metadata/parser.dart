@@ -17,7 +17,7 @@ class Parser {
     ApiInterceptor result = new ApiInterceptor();
     Interceptor annotation = _reflector.getAnnotation(object, Interceptor);
 
-    if(annotation != null) {
+    if (annotation != null) {
       result.priority = annotation.priority;
       result.object = object;
       result.when = annotation.when;
@@ -39,8 +39,15 @@ class Parser {
       throw "ParserError: Possible values for the 'format' attribute in @API annotation are Format.JSON and Format.XML.";
     }
 
-    Api result = new Api(object:apiObject, path:path, format: format);
+    MediaType mediaType = _reflector.getAnnotation(apiObject, MediaType);
+    String consume = MediaType.JSON;
+    String produce = MediaType.JSON;
+    if (mediaType != null) {
+      consume = (mediaType.consume == null ? MediaType.JSON : mediaType.consume);
+      produce = (mediaType.produce == null ? MediaType.JSON : mediaType.produce);
+    }
 
+    Api result = new Api(object:apiObject, path:path, format: format, consume: consume, produce: produce);
     result.methods = _getMethods(apiObject, result);
     result.version = _getVersion(apiObject);
 
@@ -119,44 +126,43 @@ class Parser {
 
     for (var key in classMirror.instanceMembers.keys) {
       MethodMirror methodMirror = classMirror.instanceMembers[key];
+      Method m = _reflector.search(methodMirror, [GET, POST, PUT, DELETE, PATCH]);
+      MediaType mediaType = _reflector.search(methodMirror, [MediaType]);
 
-      for (var instance in methodMirror.metadata) {
-        if (instance.hasReflectee) {
-          if (instance.reflectee.runtimeType == GET ||
-          instance.reflectee.runtimeType == POST ||
-          instance.reflectee.runtimeType == PUT ||
-          instance.reflectee.runtimeType == PATCH ||
-          instance.reflectee.runtimeType == DELETE) {
-
-            Method m = instance.reflectee;
-
-            if (m.path != null && (m.path.isEmpty || m.path == null)) {
-              throw "ParserError: 'path' parameter can't be neither null nor empty in annotations @GET, @POST, @PUT, @DELETE and @PATCH.";
-            }
-
-            Path p = api.path.join(new Path.fromString((m.path == null ? "" : m.path)));
-            String methodName = "";
-
-            if (m.runtimeType == GET) {
-              methodName = 'GET';
-            } else if (m.runtimeType == POST) {
-              methodName = 'POST';
-            } else if (m.runtimeType == PUT) {
-              methodName = 'PUT';
-            } else if (m.runtimeType == PATCH) {
-              methodName = 'PATCH';
-            } else if (m.runtimeType == DELETE) {
-              methodName = 'DELETE';
-            }
-
-            ApiMethod method = new ApiMethod(apiMeta:api, name: methodMirror.simpleName, path: p, method: methodName);
-            methodMirror.parameters.forEach((ParameterMirror param) {
-              method.parameters.add(new ApiMethodParameter(name: param.simpleName, type: param.type.reflectedType));
-            });
-
-            result.add(method);
-          }
+      if(m != null) {
+        if (m.path != null && (m.path.isEmpty || m.path == null)) {
+          throw "ParserError: 'path' parameter can't be neither null nor empty in annotations @GET, @POST, @PUT, @DELETE and @PATCH.";
         }
+
+        String consume = api.consume;
+        String produce = api.produce;
+        if (mediaType != null) {
+          consume = (mediaType.consume == null ? MediaType.JSON : mediaType.consume);
+          produce = (mediaType.produce == null ? MediaType.JSON : mediaType.produce);
+        }
+
+        Path p = api.path.join(new Path.fromString((m.path == null ? "" : m.path)));
+        String methodName = "";
+
+        // FIXME Create class HttpMethods and constants to each method inside it.
+        if (m.runtimeType == GET) {
+          methodName = 'GET';
+        } else if (m.runtimeType == POST) {
+          methodName = 'POST';
+        } else if (m.runtimeType == PUT) {
+          methodName = 'PUT';
+        } else if (m.runtimeType == PATCH) {
+          methodName = 'PATCH';
+        } else if (m.runtimeType == DELETE) {
+          methodName = 'DELETE';
+        }
+
+        ApiMethod method = new ApiMethod(apiMeta:api, name: methodMirror.simpleName, path: p, method: methodName, produce: produce, consume: consume);
+        methodMirror.parameters.forEach((ParameterMirror param) {
+          method.parameters.add(new ApiMethodParameter(name: param.simpleName, type: param.type.reflectedType));
+        });
+
+        result.add(method);
       }
     }
 

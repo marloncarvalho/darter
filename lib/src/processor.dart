@@ -2,12 +2,15 @@ library dart.processor;
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:dartson/dartson.dart';
 import 'package:darter/src/metadata/api.dart';
 import 'package:darter/src/util/reflector.dart';
 import 'package:darter/src/http.dart';
 
 class Processor {
+  static final String CONTENT_TYPE_JSON = 'application/json; charset=UTF-8';
+
   Reflector _reflector = new Reflector();
   Dartson _dson = new Dartson.JSON();
 
@@ -50,17 +53,28 @@ class Processor {
       }
     }
 
-    if(result.statusCode == -1) {
-      if(request.method == "POST") {
+    if (result.statusCode == -1) {
+      if (request.method == "POST") {
         result.statusCode = 201;
-      } else if(request.method == "DELETE") {
+      } else if (request.method == "DELETE") {
         result.statusCode = 204;
       } else {
         result.statusCode = 200;
       }
     }
 
+    _setContentHeaders(result);
+
     return result;
+  }
+
+  void _setContentHeaders(Response response) {
+    response.headers[HttpHeaders.CONTENT_TYPE] = CONTENT_TYPE_JSON;
+    response.headers[HttpHeaders.CONTENT_LENGTH] = response.body.length.toString();
+  }
+
+  Response processContentTypeNotAccepted(contentType) {
+    return new Response(body: "{\"error\": \"The requested content-type '${contentType}' is not supported.\"}", statusCode: HttpStatus.UNSUPPORTED_MEDIA_TYPE);
   }
 
   Response processFatalError() {
