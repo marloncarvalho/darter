@@ -31,6 +31,8 @@ class DarterServer {
 
   /**
    * Handles a Shelf Request.
+   *
+   * Create a Darter.Request object and hand it over to the manager.
    */
   Future<shelf.Response> _handleShelfRequest(shelf.Request request) async {
     String body = await request.readAsString();
@@ -44,21 +46,27 @@ class DarterServer {
   }
 
   /**
-   * Eventually, it will be removed because we're gonna implement a better
-   * way to find all classes annotated with @API.
+   * Add a new API to this server.
+   *
+   * This object must be an instance of a class annotated with `@API`, otherwise,
+   * it will throw an exception.
    */
   void addApi(api) {
     _manager.registerAPI(api);
   }
 
+  /**
+   * Add a new Interceptor to this server.
+   *
+   * This object must be an instance of a class annotated with `@Interceptor`, otherwise,
+   * it will throw an exception.
+   */
   void addInterceptor(interceptor) {
     _manager.registerInterceptor(interceptor);
   }
 
   /**
-   * Iterates over each API and asks it to handle this request.
-   * If false is returned, then this API didn't handle the request. Otherwise, the API handled it
-   * and we should stop the iteration.
+   * Hand over the request to the manager.
    */
   Future<Response> _handleRequest(Request request) async {
     return _manager.handle(request);
