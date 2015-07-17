@@ -4,6 +4,7 @@ import 'package:darter/src/path.dart';
 
 class Api {
   List<Api> children = [];
+  Api parent;
   dynamic object;
   String consume;
   String produce;
@@ -11,6 +12,7 @@ class Api {
   List<ApiMethod> methods = [];
   String format;
   ApiVersion version;
+  List<ApiErrorHandler> errorHandlers = [];
 
   Api({this.object, this.path, this.format, this.consume, this.produce});
 }

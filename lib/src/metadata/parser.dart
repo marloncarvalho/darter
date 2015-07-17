@@ -57,8 +57,10 @@ class Parser {
     }
 
     Api result = new Api(object:apiObject, path:path, format: format, consume: consume, produce: produce);
+    result.parent = parentApi;
     result.methods = _getMethods(apiObject, result);
     result.version = _getVersion(apiObject, (parentApi != null ? parentApi.version : null));
+    result.errorHandlers = _getErrorHandlers(apiObject);
     result.children = _getChildren(result, apiObject);
 
     return result;
@@ -74,7 +76,7 @@ class Parser {
     return result;
   }
 
-  List<ApiErrorHandler> getErrorHandlers(dynamic apiObject) {
+  List<ApiErrorHandler> _getErrorHandlers(dynamic apiObject) {
     List<ApiErrorHandler> result = [];
     ClassMirror classMirror = reflectClass(apiObject.runtimeType);
 

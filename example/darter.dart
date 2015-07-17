@@ -1,11 +1,19 @@
-// Copyright (c) 2015, <your name>. All rights reserved. Use of this source code
-// is governed by a BSD-style license that can be found in the LICENSE file.
-
-library darter.example;
+library beer;
 
 import 'package:darter/darter.dart';
 
+@API(path: 'beers')
+class BeerAPI {
+
+  @GET()
+  List get() {
+    return ["Beer 1", "Beer 2"];
+  }
+
+}
+
 main() {
-  var awesome = new Awesome();
-  print('awesome: ${awesome.isAwesome}');
+  new DarterServer()
+    ..addApi(new BeerAPI())
+    ..start();
 }

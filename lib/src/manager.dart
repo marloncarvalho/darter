@@ -11,7 +11,7 @@ import 'package:darter/src/annotations.dart';
 import 'package:darter/src/interceptor.dart';
 
 /**
- * It's a internal class and has some main responsibilities:
+ * It's an internal class and has some main responsibilities:
  *
  * 1. Search in the classpath for all classes annotated with @API and parse them.
  * 2. Cache all available routes.
@@ -26,7 +26,6 @@ class Manager {
   Parser _parser = new Parser();
   Processor _processor = new Processor();
   Map<String, PathTree> _versions = new Map();
-  List<ApiErrorHandler> _errorHandlers = [];
 
   /**
    * Adds an API.
@@ -50,7 +49,7 @@ class Manager {
 
     PathTree pathTree = _versions[api.version.version];
     api.methods.forEach((wm) => pathTree.addChild(wm.path, wm));
-    _errorHandlers = _parser.getErrorHandlers(api.object);
+
     _registerChildren(api);
   }
 
@@ -136,7 +135,7 @@ class Manager {
         response = _processor.processFatalError();
       }
     } catch (e) {
-      response = await _handleError(request, e);
+      response = await _handleError(apiMethod.apiMeta, request, e);
       if (response == null) {
         response = _processor.processFatalError();
         print(e);
@@ -164,12 +163,16 @@ class Manager {
     return !_afterChain.aborted;
   }
 
-  Future<Response> _handleError(Request request, Object exception) {
-    for (ApiErrorHandler handler in _errorHandlers) {
+  Future<Response> _handleError(Api api, Request request, Object exception) {
+    for (ApiErrorHandler handler in api.errorHandlers) {
       if (handler.exception == exception.runtimeType) {
         return _processor.processError(request, handler, exception);
       }
-    };
+    }
+
+    if(api.parent != null) {
+      return _handleError(api.parent, request, exception);
+    }
   }
 
   ApiVersion _extractVersion(Request request) {
