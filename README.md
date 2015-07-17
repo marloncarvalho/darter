@@ -4,121 +4,54 @@ Darter is an effort to create a simple and efficient framework in the Dart Langu
 ## Why should I use Darter?
 Because you want flexibility to implement your API using all REST principles. We believe that you shouldn't be limited by a framework when building a new application. Instead, it should empower you with compeling tools that help you to create amazing REST APIs.
 
-## Darter by Example
-Darter is really simple. To convince you of it, lets create a simple example. First off, create your `pubspec.yaml` file and create a dependency to Darter inside it.
+## Simple Example
 
-    dependencies:
-        darter: any
+* Create a new directory named **mydarter**.
+* In this directory, create a file named pubspec.yaml and put the code above inside it.
 
-Now, create a file named `main.dart` in the root directory of your project, create a class with a name of your choice and to it the `@API` annotation:
+```
+name: beer
+version: 0.0.1
+author: Your Name
+description: API for exposing beer data.
+homepage: Your Homepage
+environment:
+  sdk: '>=1.8.3 <2.0.0'
+dependencies:
+  collection: '>=1.1.1 <2.0.0'
+  darter: '0.0.1.beta'
+```
 
-    import 'package:darter/darter.dart';
+* Run `pub get` to update your project dependencies
+* Create a file named `main.dart` in the project's main directory. 
+* Add the following code to this file.
 
-    @API(path: 'categories')
-    @Version(version: 'v1', vendor: 'company', format: Format.JSON, using: Using.HEADER)
-    class MyDarterAPI {
-    
-        @GET()
-        List<MyModel> list() {
-            ...
-        }
-        
-        @GET(path: ':id')
-        MyModel get(Map pathParams) {
-            return MyModel.findById(pathParams['id']);
-        }
-        
-        @PUT(path: ':id')
-        Response put(PathParams params, MyModel myModel) {
-            if(MyModel.get(params.get("id")) == null) {
-              return new Response
-                 ..statusCode == 201
-                 ..entity = "Created";
-            } else {
-              return new Response
-                 ..statusCode == 200
-                 ..entity = "Updated";
-            }
-        }
-        
-        @POST()
-        MyModel post(MyModel myModel) {
-        }
-        
-        @DELETE(path: 'id')
-        void delete(Map pathParams) {
-            MyModel.get(pathParams['id']).delete();
-        }
-    }
-    
-    main() {
-        new DarterServer()
-            ..addApi(new MyDarterAPI())
-            ..start();
-    }
-    
-This annotation receives only one argument that informs the base path to this API.
+```dart
+library beer;
 
-## Interceptors
-Interceptors are useful to implement features like authentication, cors, and body transformations. For example, create an interceptor if you want to intercept a request before your resource method has been called and check if the user has authorization to access this resource. 
+import 'package:darter/darter.dart';
 
-You define an interceptor using the `@Interceptor` annotation and defining `when` it must be called (`Interceptor.BEFORE` or `Interceptor.AFTER`) and its `priority` in the chain. Observe that your annotated class must have a method named `intercept` receiving only one argument of the type `Chain` as in the example below.
+@API(path: 'beers')
+class BeerAPI { 
 
-    @Interceptor(when: Interceptor.AFTER, priority: 0)
-    class Cors {
-    
-        void intercept(Chain chain) {
-            chain.response.headers["Access-Control-Allow-Origin"] = "*";
-            chain.response.headers["Access-Control-Allow-Credentials"] = "true";
-            chain.response.headers["Access-Control-Allow-Methods"] = "GET, POST, DELETE, PUT";
-            chain.response.headers["Access-Control-Allow-Headers"] = "*";
-        }
-        
-    }
+ @GET()
+ List get() {
+    return ["Beer 1", "Beer 2"];
+  }
 
-You can do a lot of things in your interceptor including manipulate the request headers, as pointed in the example above. You're even able to abort the execution before your resource method has been called.
+}
 
-    @Interceptor(when:Interceptor.BEFORE, priority: 1)
-    class Authentication {
-        
-        void intercept(Chain chain) {
-            String token = chain.request.headers["X-Token"];
-            if (token != "Test") {
-              chain.abort(new Response()
-                ..body = "{\"error\":\"Permission Denied\"}"
-                ..statusCode = 401);
-            }
-        }
-    }
-    
-## Path Parameters
-In order to get access to all path parameters, you must add an argument of the type Map in your resource method and name it `pathParams`. Notice that it's a convention and therefore this parameter must be named like that.
+main() {
+  new DarterServer()
+    ..addApi(new BeerAPI())
+    ..start();
+}
+```
 
-    @DELETE(path: 'id')
-    void delete(Map pathParams) {
-        MyModel.get(pathParams['id']).delete();
-    }
-    
-## Query Parameters
-The same happens with the Query Parameters. You can access it adding an argument of the type Map and named `queryParams`.
-    @GET()
-    List<MyModel> list(Map queryParams) {
-    }
+In the command line, just type `dart main.dart`, open your favorite browser, and point it to the address `http://localhost:8080/beers`. You'll see a JSON Array containing two Strings.
 
-## Versioning
-Darter allows you to choose two versioning strategies: Path or Header. In the Path strategy, the version is provided in the URI, like in `http://domain/<version>`. To use this strategy, use the the `@Version` annotation with the `using` attribute setted to `Using.HEADER`.
-    
-    @API(path: 'categories')
-    @Version(version: 'v1', using: Using.PATH)
-    class MyDarterAPI {
-    }
-    
-In the other hand, the header strategy searches the `Accept` header for the version. Notice that you must follow a convention to create this header. It must be something like `application/vnd.<vendor>.<version>+<format>`. We didn't invent it, it's in the RFC! Therefore, when you choose the Header strategy, you are forced to declare three more parameters to the `@Version` annotation: `vendor`, `version`, and `format`.
-
-    @API(path: 'categories')
-    @Version(version: 'v1', vendor: 'company', format: Format.JSON, using: Using.HEADER)
-    class MyDarterAPI {
-    }
+## Documentation and Examples
+First off, read our [Getting Started](https://github.com/marloncarvalho/darter/wiki/Getting-Started) documentation and follow the links in our Wiki. Moreover, we're writing an example application that is hosted at https://github.com/marloncarvalho/beer-api-darter/.
 
 ## Is it ready for production?
 Not yet. This project is in early stages. But if you liked it, contact us and help us create an amazing REST framework!
