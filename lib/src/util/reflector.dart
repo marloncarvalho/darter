@@ -9,10 +9,28 @@ class Reflector {
     return reflect(object).invoke(method, params).reflectee;
   }
 
-  dynamic search(MethodMirror methodMirror, List annotations) {
+  List getFieldsValueAnnotatedWith(dynamic apiObject, dynamic annot) {
+    List result = [];
+
+    InstanceMirror instanceMirror = reflect(apiObject);
+    ClassMirror classMirror = reflectClass(apiObject.runtimeType);
+
+    for (var v in classMirror.declarations.values) {
+      if (v is VariableMirror) {
+        var annotation = searchAnnotation(v, [annot]);
+        if (annotation != null) {
+          result.add(instanceMirror.getField(v.simpleName).reflectee);
+        }
+      }
+    }
+
+    return result;
+  }
+
+  dynamic searchAnnotation(dynamic mirror, List annotations) {
     var result = null;
 
-    for (var instance in methodMirror.metadata) {
+    for (var instance in mirror.metadata) {
       if (instance.hasReflectee) {
         for (var a in annotations) {
           if (instance.reflectee.runtimeType == a) {

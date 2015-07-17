@@ -36,7 +36,10 @@ class Manager {
    */
   void registerAPI(apiObject) {
     Api api = _parser.parseApi(apiObject);
+    _register(api);
+  }
 
+  void _register(Api api) {
     if (api.version == null) {
       api.version = new ApiVersion(version: API_NULL_VERSION, using: Using.HEADER);
     }
@@ -47,7 +50,12 @@ class Manager {
 
     PathTree pathTree = _versions[api.version.version];
     api.methods.forEach((wm) => pathTree.addChild(wm.path, wm));
-    _errorHandlers = _parser.getErrorHandlers(apiObject);
+    _errorHandlers = _parser.getErrorHandlers(api.object);
+    _registerChildren(api);
+  }
+
+  void _registerChildren(Api api) {
+    api.children.forEach((Api child) => _register(child));
   }
 
   void registerInterceptor(interceptor) {
@@ -96,7 +104,11 @@ class Manager {
     } else if (list != null && list.length > 0 && apiMethod == null) {
       return _processor.processMethodNowAllowed();
     } else {
-      if(apiMethod.consume != request.headers[HttpHeaders.CONTENT_TYPE]) {
+      if (apiMethod == null) {
+        return _processor.processNotFound();
+      }
+
+      if (apiMethod.consume != request.headers[HttpHeaders.CONTENT_TYPE]) {
         return _processor.processContentTypeNotAccepted(request.headers[HttpHeaders.CONTENT_TYPE]);
       } else {
         return _process(request, apiMethod);

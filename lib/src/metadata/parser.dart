@@ -26,7 +26,7 @@ class Parser {
     return result;
   }
 
-  Api parseApi(dynamic apiObject) {
+  Api parseApi(dynamic apiObject, [Api parentApi]) {
     API annotation = _reflector.getAnnotation(apiObject, API);
     if (annotation == null) {
       throw "ParserError: Class is not annotated with the @API annotation.";
@@ -34,6 +34,10 @@ class Parser {
 
     Path path = new Path.fromString((annotation.path == null ? "" : annotation.path));
     String format = (annotation.format == null ? Format.JSON : annotation.format);
+
+    if (parentApi != null) {
+      path = parentApi.path.join(path);
+    }
 
     if (format != Format.JSON && format != Format.XML) {
       throw "ParserError: Possible values for the 'format' attribute in @API annotation are Format.JSON and Format.XML.";
@@ -45,11 +49,27 @@ class Parser {
     if (mediaType != null) {
       consume = (mediaType.consume == null ? MediaType.JSON : mediaType.consume);
       produce = (mediaType.produce == null ? MediaType.JSON : mediaType.produce);
+    } else {
+      if (parentApi != null) {
+        consume = (parentApi.consume == null ? MediaType.JSON : parentApi.consume);
+        produce = (parentApi.produce == null ? MediaType.JSON : parentApi.produce);
+      }
     }
 
     Api result = new Api(object:apiObject, path:path, format: format, consume: consume, produce: produce);
     result.methods = _getMethods(apiObject, result);
-    result.version = _getVersion(apiObject);
+    result.version = _getVersion(apiObject, (parentApi != null ? parentApi.version : null));
+    result.children = _getChildren(result, apiObject);
+
+    return result;
+  }
+
+  List<Api> _getChildren(Api api, apiObject) {
+    List<Api> result = [];
+
+    _reflector.getFieldsValueAnnotatedWith(apiObject, Include).forEach((dynamic r) {
+      result.add(parseApi(r, api));
+    });
 
     return result;
   }
@@ -86,7 +106,7 @@ class Parser {
     return result;
   }
 
-  ApiVersion _getVersion(dynamic apiObject) {
+  ApiVersion _getVersion(dynamic apiObject, [ApiVersion parentVersion]) {
     ApiVersion result = null;
 
     Version annotation = _reflector.getAnnotation(apiObject, Version);
@@ -114,6 +134,10 @@ class Parser {
           throw "ParserError: When 'header' is provided at 'using' attribute, 'vendor' is required.";
         }
       }
+    } else {
+      if (parentVersion != null) {
+        result = parentVersion;
+      }
     }
 
     return result;
@@ -126,10 +150,10 @@ class Parser {
 
     for (var key in classMirror.instanceMembers.keys) {
       MethodMirror methodMirror = classMirror.instanceMembers[key];
-      Method m = _reflector.search(methodMirror, [GET, POST, PUT, DELETE, PATCH]);
-      MediaType mediaType = _reflector.search(methodMirror, [MediaType]);
+      Method m = _reflector.searchAnnotation(methodMirror, [GET, POST, PUT, DELETE, PATCH]);
+      MediaType mediaType = _reflector.searchAnnotation(methodMirror, [MediaType]);
 
-      if(m != null) {
+      if (m != null) {
         if (m.path != null && (m.path.isEmpty || m.path == null)) {
           throw "ParserError: 'path' parameter can't be neither null nor empty in annotations @GET, @POST, @PUT, @DELETE and @PATCH.";
         }

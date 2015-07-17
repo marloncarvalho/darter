@@ -3,6 +3,7 @@ library darter.metadata;
 import 'package:darter/src/path.dart';
 
 class Api {
+  List<Api> children = [];
   dynamic object;
   String consume;
   String produce;

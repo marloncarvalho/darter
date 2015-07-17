@@ -120,6 +120,10 @@ class MediaType {
   const MediaType({this.produce, this.consume});
 }
 
+class Include {
+  const Include();
+}
+
 class Before {
   const Before();
 }
