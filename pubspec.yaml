@@ -1,6 +1,6 @@
 name: darter
 description: Simple and Efficient framework for creating RESTful APIs in Dart.
-version: 0.0.1-beta
+version: 0.0.1-beta2
 author: Marlon Silva Carvalho <marlon.carvalho@gmail.com>
 homepage: https://github.com/marloncarvalho/darter
 environment:

@@ -5,6 +5,7 @@ import 'package:darter/src/annotations.dart';
 import 'package:darter/src/metadata/api.dart';
 import 'package:darter/src/util/reflector.dart';
 import 'package:darter/src/path.dart';
+import 'package:darter/src/exceptions.dart';
 
 /**
  * It's responsible for parsing API objects (objects annotated with @API)
@@ -33,30 +34,14 @@ class Parser {
     }
 
     Path path = new Path.fromString((annotation.path == null ? "" : annotation.path));
-    String format = (annotation.format == null ? Format.JSON : annotation.format);
 
     if (parentApi != null) {
       path = parentApi.path.join(path);
     }
 
-    if (format != Format.JSON && format != Format.XML) {
-      throw "ParserError: Possible values for the 'format' attribute in @API annotation are Format.JSON and Format.XML.";
-    }
+    MediaType mediaType = _getMediaType(apiObject, parentApi);
 
-    MediaType mediaType = _reflector.getAnnotation(apiObject, MediaType);
-    String consume = MediaType.JSON;
-    String produce = MediaType.JSON;
-    if (mediaType != null) {
-      consume = (mediaType.consume == null ? MediaType.JSON : mediaType.consume);
-      produce = (mediaType.produce == null ? MediaType.JSON : mediaType.produce);
-    } else {
-      if (parentApi != null) {
-        consume = (parentApi.consume == null ? MediaType.JSON : parentApi.consume);
-        produce = (parentApi.produce == null ? MediaType.JSON : parentApi.produce);
-      }
-    }
-
-    Api result = new Api(object:apiObject, path:path, format: format, consume: consume, produce: produce);
+    Api result = new Api(object:apiObject, path:path, consume: mediaType.consume, produce: mediaType.produce);
     result.parent = parentApi;
     result.methods = _getMethods(apiObject, result);
     result.version = _getVersion(apiObject, (parentApi != null ? parentApi.version : null));
@@ -74,6 +59,29 @@ class Parser {
     });
 
     return result;
+  }
+
+  MediaType _getMediaType(dynamic apiObject, dynamic parentApi) {
+    MediaType mediaType = _reflector.getAnnotation(apiObject, MediaType);
+
+    String consume = MediaType.JSON;
+    String produce = MediaType.JSON;
+    if (mediaType != null) {
+      consume = (mediaType.consume == null ? MediaType.JSON : mediaType.consume);
+      produce = (mediaType.produce == null ? MediaType.JSON : mediaType.produce);
+    } else {
+      if (parentApi != null) {
+        consume = (parentApi.consume == null ? MediaType.JSON : parentApi.consume);
+        produce = (parentApi.produce == null ? MediaType.JSON : parentApi.produce);
+      }
+    }
+
+    List medias = [MediaType.JSON, MediaType.XML, MediaType.IMAGE_PNG];
+    if(!medias.contains(consume) || !medias.contains(produce)) {
+      throw new ParserError("Incorrect Media Type");
+    }
+
+    return new MediaType(consume: consume, produce: produce);
   }
 
   List<ApiErrorHandler> _getErrorHandlers(dynamic apiObject) {

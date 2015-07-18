@@ -10,11 +10,10 @@ class Api {
   String produce;
   Path path;
   List<ApiMethod> methods = [];
-  String format;
   ApiVersion version;
   List<ApiErrorHandler> errorHandlers = [];
 
-  Api({this.object, this.path, this.format, this.consume, this.produce});
+  Api({this.object, this.path, this.consume, this.produce});
 }
 
 class ApiInterceptor {
