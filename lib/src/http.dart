@@ -25,7 +25,7 @@ class Request {
   String method;
   String body;
   Map<String, String> queryParameters;
-  Map<String, String> headers;
+  Map<String, String> headers = new Map<String, String>();
 
   Request({this.uri, this.method, this.body});
 }

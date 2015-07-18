@@ -1,11 +1,13 @@
 library darter.server;
 
 import 'dart:async';
-import 'dart:io';
-import 'package:shelf/shelf_io.dart' as io;
+import 'dart:io' as io;
+import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf/shelf.dart' as shelf;
+import 'dart:convert' show UTF8;
 import 'package:darter/src/manager.dart';
 import 'package:darter/src/http.dart';
+import 'package:appengine/appengine.dart' as appengine;
 
 const JSON = 'JSON';
 const XML = 'XML';
@@ -24,9 +26,37 @@ class DarterServer {
   /**
    * Starts the HTTP Server.
    */
-  Future<HttpServer> start({address: _DEFAULT_ADDRESS, int port: _DEFAULT_PORT}) async {
+  Future<io.HttpServer> start({address: _DEFAULT_ADDRESS, int port: _DEFAULT_PORT}) async {
     var handler = const shelf.Pipeline().addMiddleware(shelf.logRequests()).addHandler(_handleShelfRequest);
-    io.serve(handler, address, port);
+    shelf_io.serve(handler, address, port);
+  }
+
+  Future startIO({address: _DEFAULT_ADDRESS, int port: _DEFAULT_PORT}) async {
+    var requestServer = await io.HttpServer.bind(address, port);
+    await for (io.HttpRequest request in requestServer) {
+      _handleIORequest(request);
+    }
+  }
+
+  Future startAppEngine() async {
+    appengine.runAppEngine((io.HttpRequest request) {
+      _handleIORequest(request);
+    });
+  }
+
+  Future _handleIORequest(io.HttpRequest request) async {
+    String body = await request.transform(UTF8.decoder).join();
+
+    Request req = new Request(uri: request.uri.path, method: request.method, body: body);
+    req.queryParameters = request.uri.queryParameters;
+    request.headers.forEach((String name, List<String> list) => req.headers[name] = request.headers.value(name));
+
+    Response resp = await _handleRequest(req);
+    resp.headers.forEach((k, v) => request.response.headers.set(k, v));
+    request.response.statusCode = resp.statusCode;
+    request.response.write(resp.body);
+
+    request.response.close();
   }
 
   /**

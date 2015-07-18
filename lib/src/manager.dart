@@ -186,7 +186,7 @@ class Manager {
         result.using = Using.PATH;
         result.format = null;
       } else {
-        String acceptHeader = request.headers['Accept'];
+        String acceptHeader = request.headers[HttpHeaders.ACCEPT];
         if (acceptHeader.indexOf("application/") == 0) {
           acceptHeader = acceptHeader.substring(12);
           if (acceptHeader.indexOf("vnd.") == 0) {

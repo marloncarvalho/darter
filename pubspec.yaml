@@ -6,6 +6,7 @@ homepage: https://github.com/marloncarvalho/darter
 environment:
   sdk: '>=1.8.0 <2.0.0'
 dependencies:
+  appengine: '>=0.2.1 <0.3.0'
   shelf: '>=0.6.2 <0.7.0'
   dartson: '>=0.2.3 <0.3.0'
   http_parser: "^0.0.2+8"
