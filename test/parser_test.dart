@@ -5,11 +5,11 @@ import 'src/apis.dart';
 import 'package:darter/src/metadata/parser.dart';
 import 'package:darter/src/metadata/api.dart';
 import 'package:darter/src/annotations.dart';
+import 'package:darter/src/path.dart';
 
 void main() {
 
-  group("testing parser", ()
-  {
+  group("testing parser", () {
 
     test('it should throw an exception when a class without annotation is parsed.', () {
       Parser parser = new Parser();
@@ -54,8 +54,25 @@ void main() {
       expect(() => parser.parseApi(api), throws);
     });
 
-    test('it should create a correct path when apis are grouped.', () {
+    test('it should create the correct hierarchy of APIs when using @Include annotation', () {
+      Parser parser = new Parser();
+      APIGroup apiGroup = new APIGroup();
+      Api api = parser.parseApi(apiGroup);
 
+      expect(api.children.length, equals(1));
+      expect(api.children[0].children.length, equals(1));
+    });
+
+    test('it should create a correct path when APIs are grouped.', () {
+      Parser parser = new Parser();
+      APIGroup apiGroup = new APIGroup();
+      Api api = parser.parseApi(apiGroup);
+
+      Path path1 = new Path.fromString("group/level_1_include");
+      Path path2 = new Path.fromString("group/level_1_include/level_2_include");
+
+      expect(api.children[0].path, equals(path1));
+      expect(api.children[0].children[0].path, equals(path2));
     });
   });
 

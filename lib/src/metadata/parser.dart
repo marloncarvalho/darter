@@ -30,7 +30,7 @@ class Parser {
   Api parseApi(dynamic apiObject, [Api parentApi]) {
     API annotation = _reflector.getAnnotation(apiObject, API);
     if (annotation == null) {
-      throw "ParserError: Class is not annotated with the @API annotation.";
+      throw new ParserError("Class is not annotated with the @API annotation.");
     }
 
     Path path = new Path.fromString((annotation.path == null ? "" : annotation.path));

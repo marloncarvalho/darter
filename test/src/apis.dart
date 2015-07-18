@@ -20,3 +20,22 @@ class APIWithMediaType {
 @MediaType(consume: "Wrong", produce: MediaType.XML)
 class APIWithIncorrectMediaType {
 }
+
+@API(path: 'group')
+class APIGroup {
+
+  @Include()
+  IncludeLevel1API i = new IncludeLevel1API();
+}
+
+@API(path: 'level_1_include')
+class IncludeLevel1API {
+
+  @Include()
+  IncludeLevel2API i = new IncludeLevel2API();
+
+}
+
+@API(path: 'level_2_include')
+class IncludeLevel2API {
+}
