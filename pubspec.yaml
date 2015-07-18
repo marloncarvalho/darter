@@ -1,15 +1,15 @@
 name: darter
-description: A library to help creating beautiful and elegant RESTful APIs in Dart.
-version: 0.0.1
+description: Simple and Efficient framework for creating RESTful APIs in Dart.
+version: 0.0.1-beta
 author: Marlon Silva Carvalho <marlon.carvalho@gmail.com>
-homepage: https://marlon.co/
+homepage: https://github.com/marloncarvalho/darter
 environment:
-  sdk: '>=1.0.0 <2.0.0'
+  sdk: '>=1.8.0 <2.0.0'
 dependencies:
-  shelf: any
-  dartson: '0.2.3'
+  shelf: '>=0.6.2 <0.7.0'
+  dartson: '>=0.2.3 <0.3.0'
   http_parser: "^0.0.2+8"
-  logging_handlers: any
+  logging_handlers: ">=0.8.0 <0.9.0"
 dev_dependencies:
   test: '>=0.12.0 <0.13.0'
   unittest: '>=0.11.0 <0.12.0'

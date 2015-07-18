@@ -1,5 +1,5 @@
 # Changelog
 
-## 0.0.1
+## 0.0.1-beta
 
-- Initial version, created by Marlon Silva Carvalho
+- First Darter release.
