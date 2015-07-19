@@ -1,3 +1,5 @@
+[![Build Status](https://drone.io/github.com/marloncarvalho/darter/status.png?random=1)](https://drone.io/github.com/marloncarvalho/darter/latest)
+
 # Darter
 Darter is an effort to create a simple and efficient framework in the Dart Language that embraces all REST principles, as proposed by Roy Fielding in his thesis. Darter doesn't impose annoying limitations that you'll find in the available Dart libraries, like forcing you to use only one versioning strategy (through the URI, for example). Darter is straightforward and really easy to setup as you'll see in our documentation and examples.
 
