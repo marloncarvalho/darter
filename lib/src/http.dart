@@ -1,5 +1,7 @@
 library darter.http.wrappers;
 
+import 'dart:io';
+
 /**
  * Wraps a Response object.
  */
@@ -9,10 +11,14 @@ class Response {
   int statusCode;
   Map<String, String> headers = new Map<String, String>();
 
-  Resposne() {
+  Response({this.body, this.statusCode, this.entity, this.headers});
+
+  String getContentType() {
+    return headers[HttpHeaders.CONTENT_TYPE];
   }
 
-  Response({this.body, this.statusCode}) {
+  void setContentType(String value) {
+    headers[HttpHeaders.CONTENT_TYPE] = value;
   }
 
 }
