@@ -33,7 +33,7 @@ class Processor {
   }
 
   Future<Response> process(Request request, ApiMethod method) async {
-    Response result = new Response(statusCode: -1);
+    Response result = new Response(statusCode: -1, headers: new Map());
 
     if (method == null) {
       result = processNotFound();
@@ -47,7 +47,9 @@ class Processor {
 
       if (returned.runtimeType == Response) {
         result.statusCode = returned.statusCode;
-        result.headers.addAll(returned.headers);
+        if(returned.headers != null) {
+          result.headers.addAll(returned.headers);
+        }
         result.body = _dson.encode(returned.entity);
       } else {
         result.body = _dson.encode(returned);

@@ -138,7 +138,6 @@ class Manager {
       response = await _handleError(apiMethod.apiMeta, request, e);
       if (response == null) {
         response = _processor.processFatalError();
-        print(e);
       }
     }
 
