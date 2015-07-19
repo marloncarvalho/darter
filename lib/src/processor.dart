@@ -7,6 +7,7 @@ import 'package:dartson/dartson.dart';
 import 'package:darter/src/metadata/api.dart';
 import 'package:darter/src/util/reflector.dart';
 import 'package:darter/src/http.dart';
+import 'package:darter/src/parameters.dart';
 
 class Processor {
   static final String CONTENT_TYPE_JSON = 'application/json; charset=UTF-8';
@@ -101,6 +102,10 @@ class Processor {
     apiMethod.parameters.forEach((ApiMethodParameter param) {
       if (param.type == Map && param.name == new Symbol("pathParams")) {
         result.add(apiMethod.getParamsFromURI(request.uri));
+      } else if (param.type == Parameters && param.name == new Symbol("pathParams")) {
+        result.add(new Parameters(apiMethod.getParamsFromURI(request.uri)));
+      } else if (param.type == Parameters && param.name == new Symbol("queryParams")) {
+        result.add(new Parameters(request.queryParameters));
       } else if (param.type == Map && param.name == new Symbol("queryParams")) {
         result.add(request.queryParameters);
       } else if (param.type == Map && param.name == new Symbol("headers")) {
