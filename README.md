@@ -1,12 +1,16 @@
 [![Build Status](https://drone.io/github.com/marloncarvalho/darter/status.png?random=1)](https://drone.io/github.com/marloncarvalho/darter/latest)
 
 # Darter
-Darter is an effort to create a simple and efficient framework in the Dart Language that embraces all REST principles, as proposed by Roy Fielding in his thesis. Darter doesn't impose annoying limitations that you'll find in the available Dart libraries, like forcing you to use only one versioning strategy (through the URI, for example). Darter is straightforward and really easy to setup as you'll see in our documentation and examples.
+Darter is an effort to create a simple and efficient framework that allows you to create RESTful APIs in the Dart Language. Our goal is to create a simple and easy-to-use library, through which you'll be able to create APIs using whatever approach you prefer. Do you prefer the path versioning strategy? Darter allows you to do it. Would like to use the content type through extension strategy? Darter allows you to do it too.
 
 ## Why should I use Darter?
-Because you want flexibility to implement your API using all REST principles. We believe that you shouldn't be limited by a framework when building a new application. Instead, it should empower you with compeling tools that help you to create amazing REST APIs.
+Because you want flexibility to implement your API. We believe that you shouldn't be limited by a framework when building a new application. Instead, it should empower you with compeling tools that help you to create amazing REST APIs.
 
-## Simple Example
+Because you want performance. Because you would like to create an API using one of the most cool languages in the world. Because, it's cool!
+
+## First Example
+
+Lets create our first Darter API!
 
 * Create a new directory named **mydarter**.
 * In this directory, create a file named pubspec.yaml and put the code above inside it.
@@ -39,6 +43,38 @@ class BeerAPI {
  @GET()
  List get() {
     return ["Beer 1", "Beer 2"];
+  }
+
+ @POST()
+ Beer post(Beer beer) {
+    beer.save();
+    return beer;
+  }
+
+ @GET(path: ':id')
+ Beer getById(Parameters pathParams) {
+    return Beer.get(pathParams.getInt('id'));
+  }
+
+ @PUT(path: ':id')
+ Response put(Beer iBeer, Parameters pathParams) {
+    Response response = new Response(statusCode: 200);
+    
+    Beer beer = Beer.get(pathParams.getInt('id'));
+    if(beer != null) {
+      beer.name = iBeer.name;
+      response.statusCode = 201;
+    } else {
+      iBeer.id = pathParams.getInt('id');
+      iBeer.save()
+    }
+    
+    return response;
+  }
+
+ @DELETE(path: ':id')
+ Beer delete(Parameters pathParams) {
+    return Beer.get(pathParams.getInt('id')).delete();
   }
 
 }
