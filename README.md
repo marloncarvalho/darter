@@ -38,43 +38,46 @@ library beer;
 import 'package:darter/darter.dart';
 
 @API(path: 'beers')
-class BeerAPI { 
+class BeerAPI {
 
- @GET()
- List get() {
+  @GET()
+  List<Beer> get() {
     return Beer.all();
   }
 
- @POST()
- Beer post(Beer beer) {
+  @POST()
+  Beer post(Beer beer) {
     beer.save();
     return beer;
   }
 
- @GET(path: ':id')
- Beer getById(Parameters pathParams) {
+  @GET(path: ':id')
+  Beer getById(Parameters pathParams) {
     return Beer.get(pathParams.getInt('id'));
   }
 
- @PUT(path: ':id')
- Response put(Beer iBeer, Parameters pathParams) {
+  @PUT(path: ':id')
+  Response put(Beer iBeer, Parameters pathParams) {
     Response response = new Response(statusCode: 200);
-    
+
     Beer beer = Beer.get(pathParams.getInt('id'));
     if(beer != null) {
       beer.name = iBeer.name;
       response.statusCode = 201;
+      response.entity = beer;
     } else {
       iBeer.id = pathParams.getInt('id');
-      iBeer.save()
+      iBeer.save();
+      response.entity = iBeer;
     }
-    
+
+
     return response;
   }
 
- @DELETE(path: ':id')
- Beer delete(Parameters pathParams) {
-    return Beer.get(pathParams.getInt('id')).delete();
+  @DELETE(path: ':id')
+  Beer delete(Parameters pathParams) {
+    Beer.get(pathParams.getInt('id')).delete();
   }
 
 }
@@ -82,27 +85,27 @@ class BeerAPI {
 class Beer {
   int id;
   String name;
-   
+
   Beer({this.name, this.id});
-   
+
   void save() {}
   void delete() {}
-  
+
   static Beer get(int id) {
-    return new Beer(id: id, name: "Beer ${id});
+    return new Beer(id: id, name: "Beer ${id}");
+    }
+
+    static List<Beer> all() {
+      return [new Beer(id: 1, name: 'Beer 1'), new Beer(id: 2, name: 'Beer 2')];
+    }
   }
-   
-  static List<Beer> all() {
-   return [new Beer(id: 1, name: 'Beer 1'), new Beer(id: 2, name: 'Beer 2')];
-  }
-}
 
 
-main() {
-  new DarterServer()
-    ..addApi(new BeerAPI())
-    ..start();
-}
+  main() {
+    new DarterServer()
+      ..addApi(new BeerAPI())
+      ..start();
+  }
 ```
 
 In the command line, just type `dart main.dart`, open your favorite browser, and point it to the address `http://localhost:8080/beers`. You'll see a JSON Array containing two Strings.
