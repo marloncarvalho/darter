@@ -37,23 +37,6 @@ library beer;
 
 import 'package:darter/darter.dart';
 
-class Beer {
-  int id;
-  String name;
-   
-  Beer({this.name, this.id});
-   
-  void save() {}
-  void delete() {}
-  static Beer get(int id) {
-    return new Beer()..id = id;
-  }
-   
-  static List<Beer> all() {
-   return [new Beer(id: 1, name: 'Beer 1'), new Beer(id: 2, name: 'Beer 2')];
-  }
-}
-
 @API(path: 'beers')
 class BeerAPI { 
 
@@ -95,6 +78,25 @@ class BeerAPI {
   }
 
 }
+
+class Beer {
+  int id;
+  String name;
+   
+  Beer({this.name, this.id});
+   
+  void save() {}
+  void delete() {}
+  
+  static Beer get(int id) {
+    return new Beer(id: id, name: "Beer ${id});
+  }
+   
+  static List<Beer> all() {
+   return [new Beer(id: 1, name: 'Beer 1'), new Beer(id: 2, name: 'Beer 2')];
+  }
+}
+
 
 main() {
   new DarterServer()
