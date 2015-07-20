@@ -72,7 +72,7 @@ class DarterServer {
     req.headers = request.headers;
     Response resp = await _handleRequest(req);
 
-    return new shelf.Response(resp.statusCode, body: resp.body, headers: resp.headers);
+    return new shelf.Response(resp.statusCode, body: (resp.body != null ? resp.body : ''), headers: resp.headers);
   }
 
   /**

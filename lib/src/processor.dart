@@ -45,12 +45,14 @@ class Processor {
         returned = _reflector.invoke(method.apiMeta.object, method.name);
       }
 
-      if (returned.runtimeType == Response) {
+      if (returned is Response) {
         result.statusCode = returned.statusCode;
-        if(returned.headers != null) {
+        if (returned.headers != null) {
           result.headers.addAll(returned.headers);
         }
         result.body = _dson.encode(returned.entity);
+      } else if (returned is Future) {
+        result.body = _dson.encode(await returned);
       } else {
         result.body = _dson.encode(returned);
       }
@@ -78,7 +80,11 @@ class Processor {
       response.headers[HttpHeaders.CONTENT_TYPE] = CONTENT_TYPE_JSON;
     }
 
-    response.headers[HttpHeaders.CONTENT_LENGTH] = response.body.length.toString();
+    if(response.body != null) {
+      response.headers[HttpHeaders.CONTENT_LENGTH] = response.body.length.toString();
+    } else {
+      response.headers[HttpHeaders.CONTENT_LENGTH] = "0";
+    }
   }
 
   Response processContentTypeNotAccepted(contentType) {
