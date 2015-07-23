@@ -34,8 +34,8 @@ void main() {
       Parser parser = new Parser();
       APIWithoutMediaType api = new APIWithoutMediaType();
       Api a = parser.parseApi(api);
-      expect(a.consume, equals(MediaType.JSON));
-      expect(a.produce, equals(MediaType.JSON));
+      expect(a.consumes, equals([MediaType.JSON, MediaType.XML]));
+      expect(a.produces, equals([MediaType.JSON, MediaType.XML]));
     });
 
     test('it should respect the provided media types values.', () {
@@ -43,8 +43,8 @@ void main() {
       APIWithMediaType api = new APIWithMediaType();
 
       Api a = parser.parseApi(api);
-      expect(a.consume, equals(MediaType.XML));
-      expect(a.produce, equals(MediaType.XML));
+      expect(a.consumes, equals([MediaType.XML]));
+      expect(a.produces, equals([MediaType.XML]));
     });
 
     test('it should create the correct hierarchy of APIs when using @Include annotation', () {
@@ -106,16 +106,16 @@ void main() {
       Parser parser = new Parser();
       APIMethodsInheritsMediaTypeFromClass api = new APIMethodsInheritsMediaTypeFromClass();
       Api parsed = parser.parseApi(api);
-      expect(parsed.methods[0].consume, equals(MediaType.JSON));
-      expect(parsed.methods[0].produce, equals(MediaType.XML));
+      expect(parsed.methods[0].consumes, equals([MediaType.JSON]));
+      expect(parsed.methods[0].produces, equals([MediaType.XML]));
     });
 
     test('it should override media type from class.', () {
       Parser parser = new Parser();
       APIOverrideMediaTypeFromClass api = new APIOverrideMediaTypeFromClass();
       Api parsed = parser.parseApi(api);
-      expect(parsed.methods[0].consume, equals(MediaType.XML));
-      expect(parsed.methods[0].produce, equals(MediaType.JSON));
+      expect(parsed.methods[0].consumes, equals([MediaType.XML]));
+      expect(parsed.methods[0].produces, equals([MediaType.JSON]));
     });
 
     test('it should compose the method path using the class path.', () {

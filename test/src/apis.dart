@@ -12,12 +12,12 @@ class APIWithoutMediaType {
 }
 
 @API()
-@MediaType(consume: MediaType.XML, produce: MediaType.XML)
+@MediaType(consumes: const [MediaType.XML], produces: const [MediaType.XML])
 class APIWithMediaType {
 }
 
 @API()
-@MediaType(consume: "Wrong", produce: MediaType.XML)
+@MediaType(consumes: const ['Wrong'], produces: const [MediaType.XML])
 class APIWithIncorrectMediaType {
 }
 
@@ -41,45 +41,54 @@ class IncludeLevel2API {
 }
 
 @API(path: '')
-class APIMustIgnoreMethodsWithoutAnnotations{
+class APIMustIgnoreMethodsWithoutAnnotations {
 
-  String get() {}
-  String post() {}
+  String get() {
+  }
+
+  String post() {
+  }
 }
 
 @API(path: '')
 class APIWithMethods {
 
   @GET()
-  get() {}
+  get() {
+  }
 
   @POST()
-  post() {}
+  post() {
+  }
 
   @PUT()
-  put() {}
+  put() {
+  }
 
   @DELETE()
-  delete() {}
+  delete() {
+  }
 
 }
 
 @API(path: '')
-@MediaType(consume: MediaType.JSON, produce: MediaType.XML)
+@MediaType(consumes: const [MediaType.JSON], produces: const [MediaType.XML])
 class APIMethodsInheritsMediaTypeFromClass {
 
   @GET()
-  get() {}
+  get() {
+  }
 
 }
 
 @API(path: '')
-@MediaType(consume: MediaType.JSON, produce: MediaType.XML)
+@MediaType(consumes: const [MediaType.JSON], produces: const [MediaType.XML])
 class APIOverrideMediaTypeFromClass {
 
   @GET()
-  @MediaType(consume: MediaType.XML, produce: MediaType.JSON)
-  get() {}
+  @MediaType(consumes: const [MediaType.XML], produces: const [MediaType.JSON])
+  get() {
+  }
 
 }
 
@@ -87,7 +96,8 @@ class APIOverrideMediaTypeFromClass {
 class APIComposedPath {
 
   @GET(path: 'path1/path2')
-  get() {}
+  get() {
+  }
 
 }
 
@@ -95,6 +105,7 @@ class APIComposedPath {
 class APIMethodParameters {
 
   @GET()
-  get(String str, Map map, List list) {}
+  get(String str, Map map, List list) {
+  }
 
 }
