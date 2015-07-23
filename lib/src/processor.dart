@@ -8,14 +8,18 @@ import 'package:darter/src/metadata/api.dart';
 import 'package:darter/src/util/reflector.dart';
 import 'package:darter/src/http.dart';
 import 'package:darter/src/parameters.dart';
+import 'package:logging/logging.dart';
 
 class Processor {
   static final String CONTENT_TYPE_JSON = 'application/json; charset=UTF-8';
+  final Logger _log = new Logger('Processor');
 
   Reflector _reflector = new Reflector();
   Dartson _dson = new Dartson.JSON();
 
   Future<Response> processError(Request request, ApiErrorHandler error, Object exception) async {
+    _log.fine("Processing Error. ${error}");
+
     Response result = new Response(statusCode: 200);
     var returned = _reflector.invoke(error.objectHandler, error.methodName, [exception]);
 
@@ -29,10 +33,14 @@ class Processor {
       result.body = _dson.encode(returned);
     }
 
+    _log.fine("Error: ${result}");
+
     return result;
   }
 
   Future<Response> process(Request request, ApiMethod method) async {
+    _log.fine("Processing request: ${request}");
+
     Response result = new Response(statusCode: -1, headers: new Map());
 
     if (method == null) {
@@ -46,8 +54,11 @@ class Processor {
       }
 
       if (returned is Response) {
+        _log.fine("API method returned a response object. ${returned}");
+
         result.statusCode = returned.statusCode;
         if (returned.headers != null) {
+          _log.fine("Adding headers from API method.");
           result.headers.addAll(returned.headers);
         }
         result.body = _dson.encode(returned.entity);
@@ -69,6 +80,8 @@ class Processor {
     }
 
     _setContentHeaders(result, method);
+
+    _log.fine("Response generated: ${result}");
 
     return result;
   }
@@ -104,28 +117,40 @@ class Processor {
   }
 
   List _parseParameters(ApiMethod apiMethod, Request request) {
+    _log.fine("Parsing Parameters from API Method: ${apiMethod}");
+
     List result = [];
     String body = request.body;
 
     apiMethod.parameters.forEach((ApiMethodParameter param) {
       if (param.type == Map && param.name == new Symbol("pathParams")) {
+        _log.fine("Map PathParams found.");
         result.add(apiMethod.getParamsFromURI(request.uri));
       } else if (param.type == Parameters && param.name == new Symbol("pathParams")) {
+        _log.fine("Parameters PathParams found.");
         result.add(new Parameters(apiMethod.getParamsFromURI(request.uri)));
       } else if (param.type == Parameters && param.name == new Symbol("queryParams")) {
+        _log.fine("Parameters QueryParams found.");
         result.add(new Parameters(request.queryParameters));
       } else if (param.type == Map && param.name == new Symbol("queryParams")) {
+        _log.fine("Map QueryParams found.");
         result.add(request.queryParameters);
       } else if (param.type == Map && param.name == new Symbol("headers")) {
+        _log.fine("Map Headers found.");
         result.add(request.headers);
       } else if (param.type == Map && param.name == new Symbol("params")) {
+        _log.fine("Map Parameters found.");
         result.add(_getParamsFromAllOverThePlace(apiMethod, request));
       } else if (param.type == Map || param.type == List) {
+        _log.fine("Map or List found.");
         result.add(JSON.decode(body));
       } else {
+        _log.fine("Complex object found.");
         result.add(_handleComplexObjectParam(apiMethod, param, body));
       }
     });
+
+    _log.fine("Parameters parsing result: ${result}");
 
     return result;
   }
@@ -137,6 +162,7 @@ class Processor {
       try {
         result = _dson.decode(body, result);
       } catch (e) {
+        _log.severe("The incoming request body could not be transformed into the requested parameter. Error converting parameter [${param.name.toString()}] with type [${param.type.toString()}] from method [${apiMethod.name.toString()}].");
         throw "The incoming request body could not be transformed into the requested parameter. Error converting parameter [${param.name.toString()}] with type [${param.type.toString()}] from method [${apiMethod.name.toString()}].";
       }
     }

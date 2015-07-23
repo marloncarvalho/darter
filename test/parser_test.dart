@@ -47,13 +47,6 @@ void main() {
       expect(a.produce, equals(MediaType.XML));
     });
 
-    test('it should throw an expcetion when an incorrect media type is provided.', () {
-      Parser parser = new Parser();
-      APIWithIncorrectMediaType api = new APIWithIncorrectMediaType();
-
-      expect(() => parser.parseApi(api), throws);
-    });
-
     test('it should create the correct hierarchy of APIs when using @Include annotation', () {
       Parser parser = new Parser();
       APIGroup apiGroup = new APIGroup();

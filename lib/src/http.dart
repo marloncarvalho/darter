@@ -21,6 +21,9 @@ class Response {
     headers[HttpHeaders.CONTENT_TYPE] = value;
   }
 
+  String toString() {
+    return "Entity: ${entity}, Body: ${body}, StatusCode: ${statusCode}, Headers: ${headers}";
+  }
 }
 
 /**
@@ -34,4 +37,8 @@ class Request {
   Map<String, String> headers = new Map<String, String>();
 
   Request({this.uri, this.method, this.body});
+
+  String toString() {
+    return "Method: ${method}, URI: ${uri}";
+  }
 }

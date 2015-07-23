@@ -17,7 +17,7 @@ class Reflector {
 
     for (var v in classMirror.declarations.values) {
       if (v is VariableMirror) {
-        var annotation = searchAnnotation(v, [annot]);
+        var annotation = searchByAnnotations(v, [annot]);
         if (annotation != null) {
           result.add(instanceMirror.getField(v.simpleName).reflectee);
         }
@@ -27,7 +27,7 @@ class Reflector {
     return result;
   }
 
-  dynamic searchAnnotation(dynamic mirror, List annotations) {
+  dynamic searchByAnnotations(dynamic mirror, List annotations) {
     var result = null;
 
     for (var instance in mirror.metadata) {

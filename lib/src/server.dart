@@ -8,30 +8,31 @@ import 'dart:convert' show UTF8;
 import 'package:darter/src/manager.dart';
 import 'package:darter/src/http.dart';
 import 'package:appengine/appengine.dart' as appengine;
+import 'package:logging/logging.dart';
 
-const JSON = 'JSON';
-const XML = 'XML';
 const _DEFAULT_ADDRESS = '0.0.0.0';
 const _DEFAULT_PORT = 8080;
-
-typedef Future HttpRequestHandler(HttpRequest);
 
 /**
  * Handles server setup stuff.
  */
 class DarterServer {
-
+  final Logger _log = new Logger('DarterServer');
   Manager _manager = new Manager();
 
   /**
    * Starts the HTTP Server.
    */
   Future<io.HttpServer> start({address: _DEFAULT_ADDRESS, int port: _DEFAULT_PORT}) async {
+    _log.info("Darter Server starting with Shelf support. Listening ${address}:${port}");
+
     var handler = const shelf.Pipeline().addMiddleware(shelf.logRequests()).addHandler(_handleShelfRequest);
     shelf_io.serve(handler, address, port);
   }
 
   Future startIO({address: _DEFAULT_ADDRESS, int port: _DEFAULT_PORT}) async {
+    _log.info("Darter Server starting with Dart:IO support. Listening ${address}:${port}");
+
     var requestServer = await io.HttpServer.bind(address, port);
     await for (io.HttpRequest request in requestServer) {
       _handleIORequest(request);
@@ -39,12 +40,16 @@ class DarterServer {
   }
 
   Future startAppEngine() async {
+    _log.info("Darter Server starting with Google AppEngine Support.");
+
     appengine.runAppEngine((io.HttpRequest request) {
       _handleIORequest(request);
     });
   }
 
   Future _handleIORequest(io.HttpRequest request) async {
+    _log.info("Request: ${request.method} -> ${request.uri.toString()}");
+
     String body = await request.transform(UTF8.decoder).join();
 
     Request req = new Request(uri: request.uri.path, method: request.method, body: body);
@@ -65,6 +70,8 @@ class DarterServer {
    * Create a Darter.Request object and hand it over to the manager.
    */
   Future<shelf.Response> _handleShelfRequest(shelf.Request request) async {
+    _log.info("Incoming Request: ${request.method} -> ${request.url.toString()}");
+
     String body = await request.readAsString();
 
     Request req = new Request(uri: request.url.path, method: request.method, body: body);
@@ -81,7 +88,9 @@ class DarterServer {
    * This object must be an instance of a class annotated with `@API`, otherwise,
    * it will throw an exception.
    */
-  void addApi(api) {
+  void addApi(var api) {
+    _log.fine("New API registered on DarterServer. ${api.runtimeType}");
+
     _manager.registerAPI(api);
   }
 
@@ -91,7 +100,9 @@ class DarterServer {
    * This object must be an instance of a class annotated with `@Interceptor`, otherwise,
    * it will throw an exception.
    */
-  void addInterceptor(interceptor) {
+  void addInterceptor(var interceptor) {
+    _log.fine("New INTERCEPTOR registered on DarterServer. ${interceptor.runtimeType}");
+
     _manager.registerInterceptor(interceptor);
   }
 
