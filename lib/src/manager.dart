@@ -89,7 +89,7 @@ class Manager {
 
       PathTree pathTree = _versions[version.version];
 
-      Path path = new Path.fromString(request.uri);
+      Path path = new Path.fromString(request.urlNoExtension);
       if (version.using == Using.HEADER) {
         list = pathTree.getMethodsForPath(path);
       } else if (version.using == Using.PATH) {

@@ -9,6 +9,21 @@ class Reflector {
     return reflect(object).invoke(method, params).reflectee;
   }
 
+  List<VariableMirror> getPublicAttributes(object) {
+    List<VariableMirror> result = [];
+
+    InstanceMirror instanceMirror = reflect(object);
+    ClassMirror classMirror = reflectClass(object.runtimeType);
+
+    for (var v in classMirror.declarations.values) {
+      if (v is VariableMirror) {
+        result.add(v);
+      }
+    }
+
+    return result;
+  }
+
   List getFieldsValueAnnotatedWith(dynamic apiObject, dynamic annot) {
     List result = [];
 
@@ -25,6 +40,11 @@ class Reflector {
     }
 
     return result;
+  }
+
+  Object getFieldValue(dynamic object, Symbol name) {
+    InstanceMirror instanceMirror = reflect(object);
+    return instanceMirror.getField(name).reflectee;
   }
 
   dynamic searchByAnnotations(dynamic mirror, List annotations) {

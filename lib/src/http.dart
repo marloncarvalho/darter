@@ -39,6 +39,10 @@ class Request {
 
   Request({this.uri, this.method, this.body});
 
+  String get urlNoExtension {
+    return uri.replaceAll("\.json", "").replaceAll("\.xml", "");
+  }
+
   String getMediaType() {
     String result = null;
 

@@ -2,6 +2,8 @@ library darter.transformers;
 
 import 'package:darter/src/annotations.dart';
 import 'package:dartson/dartson.dart';
+import 'package:darter/src/util/reflector.dart';
+import 'dart:mirrors';
 
 abstract class Transformer {
   String transform(dynamic object);
@@ -35,6 +37,13 @@ class JSONTransformer implements Transformer {
 class XMLTransformer implements Transformer {
 
   String transform(dynamic object) {
+//    Reflector reflector = new Reflector();
+//    String result = "";
+//
+//    reflector.getPublicAttributes(object).forEach((VariableMirror vm) {
+//      result += "<${MirrorSystem.getName(vm.simpleName)}>${reflector.getFieldValue(object, vm.simpleName)}</${MirrorSystem.getName(vm.simpleName)}>";
+//    });
+
     return "<xml></xml>";
   }
 
