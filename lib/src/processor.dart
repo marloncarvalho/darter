@@ -9,6 +9,7 @@ import 'package:darter/src/util/reflector.dart';
 import 'package:darter/src/http.dart';
 import 'package:darter/src/parameters.dart';
 import 'package:logging/logging.dart';
+import 'package:darter/src/exceptions.dart';
 
 class Processor {
   static final String CONTENT_TYPE_JSON = 'application/json; charset=UTF-8';
@@ -163,7 +164,7 @@ class Processor {
         result = _dson.decode(body, result);
       } catch (e) {
         _log.severe("The incoming request body could not be transformed into the requested parameter. Error converting parameter [${param.name.toString()}] with type [${param.type.toString()}] from method [${apiMethod.name.toString()}].");
-        throw "The incoming request body could not be transformed into the requested parameter. Error converting parameter [${param.name.toString()}] with type [${param.type.toString()}] from method [${apiMethod.name.toString()}].";
+        throw new DarterException("The incoming request body could not be transformed into the requested parameter. Error converting parameter [${param.name.toString()}] with type [${param.type.toString()}] from method [${apiMethod.name.toString()}].");
       }
     }
 

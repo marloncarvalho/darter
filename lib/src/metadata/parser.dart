@@ -109,12 +109,12 @@ class Parser {
 
             if (methodMirror.parameters.length > 1) {
               _log.severe("DARTER/Parser - Method annotated with @ErrorHandler() but with more than one argument.");
-              throw "An error handle must have only one parameter.";
+              throw new ParserError("An error handle must have only one parameter.");
             }
 
             if (methodMirror.parameters.length == 0) {
               _log.severe("DARTER/Parser - Method annotated with @ErrorHandler() but with no arguments.");
-              throw "An error handle must have at least one parameter.";
+              throw new ParserError("An error handle must have at least one parameter.");
             }
 
             handler.exception = methodMirror.parameters[0].type.reflectedType;
@@ -139,28 +139,28 @@ class Parser {
 
       if (result.version.isEmpty || result.version == null) {
         _log.severe("DARTER/Parser - @Version with no version defined.");
-        throw "ParserError: 'version' attribute can't be neither an empty string nor null.";
+        throw new ParserError("ParserError: 'version' attribute can't be neither an empty string nor null.");
       }
 
       if (result.using != 'header' && result.using != 'path') {
         _log.severe("DARTER/Parser - @Version with no using.");
-        throw "ParserError: Possible values for the 'using' attribute in @Version annotation are Using.HEADER and Using.PATH.";
+        throw new ParserError("ParserError: Possible values for the 'using' attribute in @Version annotation are Using.HEADER and Using.PATH.");
       }
 
       if (result.using == 'header') {
         if (result.format.isEmpty || result.format == null) {
           _log.severe("DARTER/Parser - @Version with no header.");
-          throw "ParserError: When 'header' is provided at 'using' attribute, 'vendor' is required.";
+          throw new ParserError("ParserError: When 'header' is provided at 'using' attribute, 'vendor' is required.");
         }
 
         if (result.format != 'json' && result.format != 'xml') {
           _log.severe("DARTER/Parser - @Version with no format.");
-          throw "ParserError: Possible values for the 'format' attribute in @Version annotation are Format.JSON and Format.XML.";
+          throw new ParserError("ParserError: Possible values for the 'format' attribute in @Version annotation are Format.JSON and Format.XML.");
         }
 
         if (result.vendor.isEmpty || result.vendor == null) {
           _log.severe("DARTER/Parser - @Version with no vendor.");
-          throw "ParserError: When 'header' is provided at 'using' attribute, 'vendor' is required.";
+          throw new ParserError("ParserError: When 'header' is provided at 'using' attribute, 'vendor' is required.");
         }
       }
     } else {

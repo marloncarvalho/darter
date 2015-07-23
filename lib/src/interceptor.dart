@@ -4,6 +4,7 @@ import 'package:darter/src/http.dart';
 import 'package:darter/src/metadata/api.dart';
 import 'package:darter/src/util/reflector.dart';
 import 'package:logging/logging.dart';
+import 'package:darter/src/exceptions.dart';
 
 class Chain {
   final Logger _log = new Logger('Chain');
@@ -47,7 +48,7 @@ class Chain {
         }
       } else {
         _log.severe("Interceptor object doesn't contain the method 'intercept'. ${interceptor}");
-        throw "Could not find method 'intercept' in Interceptor class [${interceptor.object.runtimeType}]";
+        throw new DarterException("Could not find method 'intercept' in Interceptor class [${interceptor.object.runtimeType}]");
       }
     }
   }
