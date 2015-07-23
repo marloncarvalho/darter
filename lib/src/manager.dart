@@ -75,15 +75,9 @@ class Manager {
     }
   }
 
-  /**
-   * Handles a request.
-   */
-  Future<Response> handle(Request request) async {
-    ApiMethod apiMethod = null;
-    List<ApiMethod> list = null;
-    bool hasPathsForVersion = false;
+  List<ApiMethod> _getCandidatesMethods(Request request, ApiVersion version) {
+    List<ApiMethod> result = [];
 
-    ApiVersion version = _extractVersion(request);
     if (_versions.containsKey(version.version)) {
       _log.fine("DARTER/Manager - Version found. ${version.version}.");
 
@@ -91,54 +85,68 @@ class Manager {
 
       Path path = new Path.fromString(request.urlNoExtension);
       if (version.using == Using.HEADER) {
-        list = pathTree.getMethodsForPath(path);
+        result = pathTree.getMethodsForPath(path);
       } else if (version.using == Using.PATH) {
-        list = pathTree.getMethodsForPath(path.subPath(start:1));
-      }
-
-      _log.fine("DARTER/Manager - API Methods: ${list}.");
-
-      if (list != null) {
-        hasPathsForVersion = true;
-        list.forEach((ApiMethod m) {
-          ApiVersion cachedVersion = m.apiMeta.version;
-          if (cachedVersion.using == version.using && cachedVersion.vendor == version.vendor) {
-            if (m.method == request.method) {
-              _log.fine("DARTER/Manager - Found a method responsible to handle the request ${request.uri}. Method: ${m}");
-              apiMethod = m;
-            }
-          }
-        });
+        result = pathTree.getMethodsForPath(path.subPath(start:1));
       }
     }
 
-    if (hasPathsForVersion && apiMethod == null) {
-      _log.fine("DARTER/Manager - No method found to handle request. Request: ${request}");
-      return _processor.processNotFound();
-    } else if (list != null && list.length > 0 && apiMethod == null) {
-      _log.fine("DARTER/Manager - Method found but with a Method not allowed. Request: ${request}");
-      return _processor.processMethodNowAllowed();
-    } else {
-      if (apiMethod == null) {
-        return _processor.processNotFound();
-      }
+    return result;
+  }
 
+  ApiMethod _getApiMethod(List<ApiMethod> candidatesMethods, Request request, ApiVersion version) {
+    var result = null;
+
+    candidatesMethods.forEach((ApiMethod am) {
+      ApiVersion cachedVersion = am.apiMeta.version;
+      if (cachedVersion.using == version.using && cachedVersion.vendor == version.vendor) {
+        if (am.method == request.method) {
+          _log.fine("DARTER/Manager - Found a method responsible to handle the request ${request.uri}. Method: ${am}");
+          result = am;
+        }
+      }
+    });
+
+    return result;
+  }
+
+  /**
+   * Handles a request.
+   * Checks if there's a method responsible to handle this request.
+   * If there's a method then it asks the processor to create a response.
+   */
+  Future<Response> handle(Request request) async {
+    Response result = null;
+    ApiVersion version = _extractVersion(request);
+    List<ApiMethod> candidatesMethods = _getCandidatesMethods(request, version);
+    ApiMethod apiMethod = _getApiMethod(candidatesMethods, request, version);
+
+    _log.fine("DARTER/Manager - API Method: ${apiMethod}.");
+
+    if (candidatesMethods.length > 0 && apiMethod == null) {
+      _log.fine("DARTER/Manager - Method found but with a method not allowed. Request: ${request}");
+      result = _processor.processMethodNowAllowed();
+    } else if (apiMethod == null) {
+      _log.fine("DARTER/Manager - No method found to handle request. Request: ${request}");
+      result = _processor.processNotFound();
+    } else {
       if (!apiMethod.consumes.contains(request.headers[HttpHeaders.CONTENT_TYPE])) {
         _log.fine("DARTER/Manager - Method found but doesn't consume the specified media type. MediaType: ${request.headers[HttpHeaders.CONTENT_TYPE]}.");
-        return _processor.processContentTypeNotAccepted(request.headers[HttpHeaders.CONTENT_TYPE]);
+        result = _processor.processContentTypeNotAccepted(request.headers[HttpHeaders.CONTENT_TYPE]);
       } else {
-
         String reqMediaType = request.getMediaType();
         if (apiMethod.produces.contains(reqMediaType)) {
           Response response = await _process(request, apiMethod);
           _log.info("DARTER/Manager - Generated response ${response}");
-          return response;
+          result = response;
         } else {
           _log.fine("DARTER/Manager - Method found but doesn't produce the specified media type. Request: ${request}.");
-          return _processor.processContentTypeNotAccepted('');
+          result = _processor.processContentTypeNotAccepted('');
         }
       }
     }
+
+    return result;
   }
 
   Future<Response> _process(request, apiMethod) async {
