@@ -26,7 +26,7 @@ class Parser {
       result.when = annotation.when;
     }
 
-    _log.info("Interceptor parsed: ${result}");
+    _log.fine("DARTER/Parser - Interceptor parsed: ${result}");
 
     return result;
   }
@@ -53,18 +53,18 @@ class Parser {
     result.errorHandlers = _getErrorHandlers(apiObject);
     result.children = _getChildren(result, apiObject);
 
-    _log.info("API parsed: ${result}");
+    _log.fine("DARTER/Parser - API parsed: ${result}");
 
     return result;
   }
 
   List<Api> _getChildren(Api api, apiObject) {
-    _log.fine("Parsing children APIs.");
+    _log.fine("DARTER/Parser - Parsing children APIs.");
 
     List<Api> result = [];
 
     _reflector.getFieldsValueAnnotatedWith(apiObject, Include).forEach((dynamic r) {
-      _log.fine("Child API found: ${r}");
+      _log.fine("DARTER/Parser - Child API found: ${r}");
       result.add(parseApi(r, api));
     });
 
@@ -72,7 +72,7 @@ class Parser {
   }
 
   MediaType _getMediaType(dynamic apiObject, dynamic parentApi) {
-    _log.fine("Parsing MediaType.");
+    _log.fine("DARTER/Parser - Parsing MediaType.");
 
     MediaType mediaType = _reflector.getAnnotation(apiObject, MediaType);
 
@@ -92,7 +92,7 @@ class Parser {
   }
 
   List<ApiErrorHandler> _getErrorHandlers(dynamic apiObject) {
-    _log.fine("Parsing Error Handlers.");
+    _log.fine("DARTER/Parser - Parsing Error Handlers.");
 
     List<ApiErrorHandler> result = [];
     ClassMirror classMirror = reflectClass(apiObject.runtimeType);
@@ -108,17 +108,17 @@ class Parser {
             handler.objectHandler = apiObject;
 
             if (methodMirror.parameters.length > 1) {
-              _log.severe("Method annotated with @ErrorHandler() but with more than one argument.");
+              _log.severe("DARTER/Parser - Method annotated with @ErrorHandler() but with more than one argument.");
               throw "An error handle must have only one parameter.";
             }
 
             if (methodMirror.parameters.length == 0) {
-              _log.severe("Method annotated with @ErrorHandler() but with no arguments.");
+              _log.severe("DARTER/Parser - Method annotated with @ErrorHandler() but with no arguments.");
               throw "An error handle must have at least one parameter.";
             }
 
             handler.exception = methodMirror.parameters[0].type.reflectedType;
-            _log.info("Error handler found: ${handler}");
+            _log.fine("DARTER/Parser - Error handler found: ${handler}");
             result.add(handler);
           }
         }
@@ -129,7 +129,7 @@ class Parser {
   }
 
   ApiVersion _getVersion(dynamic apiObject, [ApiVersion parentVersion]) {
-    _log.fine("Parsing Version.");
+    _log.fine("DARTER/Parser - Parsing Version.");
 
     ApiVersion result = null;
 
@@ -138,28 +138,28 @@ class Parser {
       result = new ApiVersion(version: annotation.version, vendor: annotation.vendor, using: annotation.using, format: annotation.format);
 
       if (result.version.isEmpty || result.version == null) {
-        _log.severe("@Version with no version defined.");
+        _log.severe("DARTER/Parser - @Version with no version defined.");
         throw "ParserError: 'version' attribute can't be neither an empty string nor null.";
       }
 
       if (result.using != 'header' && result.using != 'path') {
-        _log.severe("@Version with no using.");
+        _log.severe("DARTER/Parser - @Version with no using.");
         throw "ParserError: Possible values for the 'using' attribute in @Version annotation are Using.HEADER and Using.PATH.";
       }
 
       if (result.using == 'header') {
         if (result.format.isEmpty || result.format == null) {
-          _log.severe("@Version with no header.");
+          _log.severe("DARTER/Parser - @Version with no header.");
           throw "ParserError: When 'header' is provided at 'using' attribute, 'vendor' is required.";
         }
 
         if (result.format != 'json' && result.format != 'xml') {
-          _log.severe("@Version with no format.");
+          _log.severe("DARTER/Parser - @Version with no format.");
           throw "ParserError: Possible values for the 'format' attribute in @Version annotation are Format.JSON and Format.XML.";
         }
 
         if (result.vendor.isEmpty || result.vendor == null) {
-          _log.severe("@Version with no vendor.");
+          _log.severe("DARTER/Parser - @Version with no vendor.");
           throw "ParserError: When 'header' is provided at 'using' attribute, 'vendor' is required.";
         }
       }
@@ -169,14 +169,14 @@ class Parser {
       }
     }
 
-    _log.info("Version found: ${result}");
+    _log.fine("DARTER/Parser - Version found: ${result}");
 
     return result;
   }
 
   // FIXME Refactoring required.
   List<ApiMethod> _getMethods(dynamic object, Api api) {
-    _log.fine("Parsing API methods for ${api}");
+    _log.fine("DARTER/Parser - Parsing API methods for ${api}");
 
     List<ApiMethod> result = [];
     ClassMirror classMirror = reflectClass(object.runtimeType);
@@ -219,7 +219,7 @@ class Parser {
       }
     }
 
-    _log.info("API Method found: ${result}");
+    _log.fine("DARTER/Parser - API Method found: ${result}");
 
     return result;
   }

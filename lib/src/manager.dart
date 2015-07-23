@@ -37,18 +37,18 @@ class Manager {
    */
   void registerAPI(apiObject) {
     Api api = _parser.parseApi(apiObject);
-    _log.fine("Registering API: ${api}");
+    _log.fine("DARTER/Manager - Registering API: ${api}");
     _register(api);
   }
 
   void _register(Api api) {
     if (api.version == null) {
-      _log.fine("No version provided. Using '${API_NULL_VERSION}'.");
+      _log.fine("DARTER/Manager - No version provided. Using '${API_NULL_VERSION}'.");
       api.version = new ApiVersion(version: API_NULL_VERSION, using: Using.HEADER);
     }
 
     if (!_versions.containsKey(api.version.version)) {
-      _log.fine("Version not cached yet. Creating it: ${api.version}");
+      _log.fine("DARTER/Manager - Version not cached yet. Creating it: ${api.version}");
 
       _versions[api.version.version] = new PathTree(new Path.fromString('/'));
     }
@@ -67,10 +67,10 @@ class Manager {
     ApiInterceptor apiInt = _parser.parseInterceptor(interceptor);
 
     if (apiInt.when == Interceptor.AFTER) {
-      _log.info("Registering After Interceptor: ${interceptor}");
+      _log.fine("DARTER/Manager - Registering After Interceptor: ${interceptor}");
       _afterChain.addInterceptor(apiInt);
     } else if (apiInt.when == Interceptor.BEFORE) {
-      _log.info("Registering Before Interceptor: ${interceptor}");
+      _log.fine("DARTER/Manager - Registering Before Interceptor: ${interceptor}");
       _beforeChain.addInterceptor(apiInt);
     }
   }
@@ -85,7 +85,7 @@ class Manager {
 
     ApiVersion version = _extractVersion(request);
     if (_versions.containsKey(version.version)) {
-      _log.fine("Version found. ${version.version}.");
+      _log.fine("DARTER/Manager - Version found. ${version.version}.");
 
       PathTree pathTree = _versions[version.version];
 
@@ -96,7 +96,7 @@ class Manager {
         list = pathTree.getMethodsForPath(path.subPath(start:1));
       }
 
-      _log.fine("API Methods: ${list}.");
+      _log.fine("DARTER/Manager - API Methods: ${list}.");
 
       if (list != null) {
         hasPathsForVersion = true;
@@ -104,7 +104,7 @@ class Manager {
           ApiVersion cachedVersion = m.apiMeta.version;
           if (cachedVersion.using == version.using && cachedVersion.format == version.format && cachedVersion.vendor == version.vendor) {
             if (m.method == request.method) {
-              _log.fine("Found a method responsible to handle the request ${request.uri}. Method: ${method}");
+              _log.fine("DARTER/Manager - Found a method responsible to handle the request ${request.uri}. Method: ${m}");
               apiMethod = m;
             }
           }
@@ -113,10 +113,10 @@ class Manager {
     }
 
     if (hasPathsForVersion && apiMethod == null) {
-      _log.fine("No method found to handle request. Request: ${request}");
+      _log.fine("DARTER/Manager - No method found to handle request. Request: ${request}");
       return _processor.processNotFound();
     } else if (list != null && list.length > 0 && apiMethod == null) {
-      _log.fine("Method found but with a Method not allowed. Request: ${request}");
+      _log.fine("DARTER/Manager - Method found but with a Method not allowed. Request: ${request}");
       return _processor.processMethodNowAllowed();
     } else {
       if (apiMethod == null) {
@@ -124,10 +124,12 @@ class Manager {
       }
 
       if (apiMethod.consume != request.headers[HttpHeaders.CONTENT_TYPE]) {
-        _log.fine("Method found but doesn't respond to the specifiec media type. Request: ${request}");
+        _log.fine("DARTER/Manager - Method found but doesn't respond to the specifiec media type. Request: ${request}");
         return _processor.processContentTypeNotAccepted(request.headers[HttpHeaders.CONTENT_TYPE]);
       } else {
-        return _process(request, apiMethod);
+        Response response = await _process(request, apiMethod);
+        _log.info("DARTER/Manager - Generated response ${response}");
+        return response;
       }
     }
   }
@@ -135,7 +137,7 @@ class Manager {
   Future<Response> _process(request, apiMethod) async {
     Response response = null;
 
-    _log.fine("Processing request.");
+    _log.fine("DARTER/Manager - Processing request.");
 
     try {
 
@@ -151,11 +153,11 @@ class Manager {
       }
 
       if (response == null) {
-        _log.info("No response provided from API Method or Interceptors.");
+        _log.info("DARTER/Manager - No response provided from API Method or Interceptors.");
         response = _processor.processFatalError();
       }
     } catch (e) {
-      _log.info("Exception thrown from API method: ${e}");
+      _log.info("DARTER/Manager - Exception thrown from API method: ${e}");
 
       response = await _handleError(apiMethod.apiMeta, request, e);
       if (response == null) {
@@ -170,7 +172,7 @@ class Manager {
   }
 
   bool _processBeforeInterceptors(Request request) {
-    _log.info("Processing Before Interceptors.");
+    _log.fine("DARTER/Manager - Processing Before Interceptors.");
 
     _beforeChain.request = request;
     _beforeChain.execute();
@@ -179,7 +181,7 @@ class Manager {
   }
 
   bool _processAfterInterceptors(Request request, Response response) {
-    _log.info("Processing After Interceptors.");
+    _log.fine("DARTER/Manager - Processing After Interceptors.");
 
     _afterChain.request = request;
     _afterChain.response = response;
@@ -189,23 +191,23 @@ class Manager {
   }
 
   Future<Response> _handleError(Api api, Request request, Object exception) {
-    _log.fine("Exception thrown ${exception}. Processing Error Handlers.");
+    _log.fine("DARTER/Manager - Exception thrown ${exception}. Processing Error Handlers.");
 
     for (ApiErrorHandler handler in api.errorHandlers) {
       if (handler.exception == exception.runtimeType) {
-        _log.info("Executing Error Handler: ${handler}");
+        _log.info("DARTER/Manager - Executing Error Handler: ${handler}");
         return _processor.processError(request, handler, exception);
       }
     }
 
     if(api.parent != null) {
-      _log.info("Searching parents for error handlers.");
+      _log.info("DARTER/Manager - Searching parents for error handlers.");
       return _handleError(api.parent, request, exception);
     }
   }
 
   ApiVersion _extractVersion(Request request) {
-    _log.fine("Extracting version from Request.");
+    _log.fine("DARTER/Manager - Extracting version from Request.");
     ApiVersion result = new ApiVersion(version: API_NULL_VERSION, using: Using.HEADER);
 
     try {
@@ -236,7 +238,7 @@ class Manager {
 
     }
 
-    _log.info("Version extracted: ${result}");
+    _log.fine("DARTER/Manager - Version extracted: ${result}");
 
     return result;
   }
