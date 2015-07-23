@@ -1,6 +1,7 @@
 library darter.http.wrappers;
 
 import 'dart:io';
+import 'package:darter/src/annotations.dart';
 
 /**
  * Wraps a Response object.
@@ -37,6 +38,25 @@ class Request {
   Map<String, String> headers = new Map<String, String>();
 
   Request({this.uri, this.method, this.body});
+
+  String getMediaType() {
+    String result = null;
+
+    if (uri.endsWith('.json')) {
+      result = MediaType.JSON;
+    } else if (uri.endsWith('.xml')) {
+      result = MediaType.XML;
+    } else {
+      String accept = headers[HttpHeaders.ACCEPT];
+      if (accept.indexOf('application/json') > -1 || accept.indexOf('+json') > -1) {
+        result = MediaType.JSON;
+      } else if (accept.indexOf('application/xml') > -1 || accept.indexOf('+xml') > -1) {
+        result = MediaType.XML;
+      }
+    }
+
+    return result;
+  }
 
   String toString() {
     return "Method: ${method}, URI: ${uri}";

@@ -46,7 +46,7 @@ class Parser {
 
     MediaType mediaType = _getMediaType(apiObject, parentApi);
 
-    Api result = new Api(object:apiObject, path:path, consume: mediaType.consume, produce: mediaType.produce);
+    Api result = new Api(object:apiObject, path:path, consumes: mediaType.consumes, produces: mediaType.produces);
     result.parent = parentApi;
     result.methods = _getMethods(apiObject, result);
     result.version = _getVersion(apiObject, (parentApi != null ? parentApi.version : null));
@@ -71,24 +71,24 @@ class Parser {
     return result;
   }
 
-  MediaType _getMediaType(dynamic apiObject, dynamic parentApi) {
+  MediaType _getMediaType(dynamic apiObject, Api parentApi) {
     _log.fine("DARTER/Parser - Parsing MediaType.");
 
     MediaType mediaType = _reflector.getAnnotation(apiObject, MediaType);
 
-    String consume = MediaType.JSON;
-    String produce = MediaType.JSON;
+    List<String> consumes = [MediaType.JSON, MediaType.XML];
+    List<String> produces = [MediaType.JSON, MediaType.XML];
     if (mediaType != null) {
-      consume = (mediaType.consume == null ? MediaType.JSON : mediaType.consume);
-      produce = (mediaType.produce == null ? MediaType.JSON : mediaType.produce);
+      consumes = (mediaType.consumes == null ? MediaType.JSON : mediaType.consumes);
+      produces = (mediaType.produces == null ? MediaType.JSON : mediaType.produces);
     } else {
       if (parentApi != null) {
-        consume = (parentApi.consume == null ? MediaType.JSON : parentApi.consume);
-        produce = (parentApi.produce == null ? MediaType.JSON : parentApi.produce);
+        consumes = (parentApi.consumes == null ? MediaType.JSON : parentApi.consumes);
+        produces = (parentApi.produces == null ? MediaType.JSON : parentApi.produces);
       }
     }
 
-    return new MediaType(consume: consume, produce: produce);
+    return new MediaType(consumes: consumes, produces: produces);
   }
 
   List<ApiErrorHandler> _getErrorHandlers(dynamic apiObject) {
@@ -187,11 +187,11 @@ class Parser {
       MediaType mediaType = _reflector.searchByAnnotations(methodMirror, [MediaType]);
 
       if (m != null) {
-        String consume = api.consume;
-        String produce = api.produce;
+        List<String> consumes = api.consumes;
+        List<String> produces = api.produces;
         if (mediaType != null) {
-          consume = (mediaType.consume == null ? api.consume : mediaType.consume);
-          produce = (mediaType.produce == null ? api.produce : mediaType.produce);
+          consumes = (mediaType.consumes == null ? api.consumes : mediaType.consumes);
+          produces = (mediaType.produces == null ? api.produces : mediaType.produces);
         }
 
         Path p = api.path.join(new Path.fromString((m.path == null ? "" : m.path)));
@@ -210,7 +210,7 @@ class Parser {
           methodName = 'DELETE';
         }
 
-        ApiMethod method = new ApiMethod(apiMeta:api, name: methodMirror.simpleName, path: p, method: methodName, produce: produce, consume: consume);
+        ApiMethod method = new ApiMethod(apiMeta:api, name: methodMirror.simpleName, path: p, method: methodName, produces: produces, consumes: consumes);
         methodMirror.parameters.forEach((ParameterMirror param) {
           method.parameters.add(new ApiMethodParameter(name: param.simpleName, type: param.type.reflectedType));
         });

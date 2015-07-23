@@ -6,17 +6,17 @@ class Api {
   List<Api> children = [];
   Api parent;
   dynamic object;
-  String consume;
-  String produce;
+  List<String> consumes;
+  List<String> produces;
   Path path;
   List<ApiMethod> methods = [];
   ApiVersion version;
   List<ApiErrorHandler> errorHandlers = [];
 
-  Api({this.object, this.path, this.consume, this.produce});
+  Api({this.object, this.path, this.consumes, this.produces});
 
   String toString() {
-    return "(Parent: ${parent != null ? parent.path : ''}), (produces: ${produce}), (consumes: ${consume}), (path: ${path.toString()}), (methods: ${methods.length}), (errorHandlers: ${errorHandlers.length}), (children: ${children.length}), (Version: ${version})";
+    return "(Parent: ${parent != null ? parent.path : ''}), (produces: ${produces}), (consumes: ${consumes}), (path: ${path.toString()}), (methods: ${methods.length}), (errorHandlers: ${errorHandlers.length}), (children: ${children.length}), (Version: ${version})";
   }
 
 }
@@ -48,18 +48,18 @@ class ApiVersion {
 }
 
 class ApiMethod {
-  String consume;
-  String produce;
+  List<String> consumes;
+  List<String> produces;
   Api apiMeta;
   Symbol name;
   List parameters = [];
   Path path;
   String method;
 
-  ApiMethod({this.apiMeta, this.name, this.path, this.method, this.consume, this.produce});
+  ApiMethod({this.apiMeta, this.name, this.path, this.method, this.consumes, this.produces});
 
   String toString() {
-    return "Method: ${method}, Path: ${path}, Consume: ${consume}, Produce: ${produce}, Name: ${name}, Parameters: ${parameters.length}";
+    return "Method: ${method}, Path: ${path}, Consume: ${consumes}, Produce: ${produces}, Name: ${name}, Parameters: ${parameters.length}";
   }
 
   Map getParamsFromURI(String uri) {

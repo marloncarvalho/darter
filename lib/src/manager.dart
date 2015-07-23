@@ -102,7 +102,7 @@ class Manager {
         hasPathsForVersion = true;
         list.forEach((ApiMethod m) {
           ApiVersion cachedVersion = m.apiMeta.version;
-          if (cachedVersion.using == version.using && cachedVersion.format == version.format && cachedVersion.vendor == version.vendor) {
+          if (cachedVersion.using == version.using && cachedVersion.vendor == version.vendor) {
             if (m.method == request.method) {
               _log.fine("DARTER/Manager - Found a method responsible to handle the request ${request.uri}. Method: ${m}");
               apiMethod = m;
@@ -123,13 +123,20 @@ class Manager {
         return _processor.processNotFound();
       }
 
-      if (apiMethod.consume != request.headers[HttpHeaders.CONTENT_TYPE]) {
-        _log.fine("DARTER/Manager - Method found but doesn't respond to the specifiec media type. Request: ${request}");
+      if (!apiMethod.consumes.contains(request.headers[HttpHeaders.CONTENT_TYPE])) {
+        _log.fine("DARTER/Manager - Method found but doesn't consume the specified media type. MediaType: ${request.headers[HttpHeaders.CONTENT_TYPE]}.");
         return _processor.processContentTypeNotAccepted(request.headers[HttpHeaders.CONTENT_TYPE]);
       } else {
-        Response response = await _process(request, apiMethod);
-        _log.info("DARTER/Manager - Generated response ${response}");
-        return response;
+
+        String reqMediaType = request.getMediaType();
+        if (apiMethod.produces.contains(reqMediaType)) {
+          Response response = await _process(request, apiMethod);
+          _log.info("DARTER/Manager - Generated response ${response}");
+          return response;
+        } else {
+          _log.fine("DARTER/Manager - Method found but doesn't produce the specified media type. Request: ${request}.");
+          return _processor.processContentTypeNotAccepted('');
+        }
       }
     }
   }
@@ -200,7 +207,7 @@ class Manager {
       }
     }
 
-    if(api.parent != null) {
+    if (api.parent != null) {
       _log.info("DARTER/Manager - Searching parents for error handlers.");
       return _handleError(api.parent, request, exception);
     }
@@ -245,7 +252,9 @@ class Manager {
 
 }
 
-class PathTree {
+class
+
+PathTree {
   Path path;
   List<ApiMethod> methods = [];
   Map<String, PathTree> _children = new Map<String, PathTree>();

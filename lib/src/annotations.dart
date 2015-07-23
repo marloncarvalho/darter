@@ -114,10 +114,10 @@ class MediaType {
   static const String XML = 'application/xml';
   static const String IMAGE_PNG = 'image/png';
 
-  final String produce;
-  final String consume;
+  final List<String> produces;
+  final List<String> consumes;
 
-  const MediaType({this.produce, this.consume});
+  const MediaType({this.produces, this.consumes});
 }
 
 class Include {

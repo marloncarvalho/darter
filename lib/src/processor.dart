@@ -3,35 +3,36 @@ library dart.processor;
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:dartson/dartson.dart';
 import 'package:darter/src/metadata/api.dart';
 import 'package:darter/src/util/reflector.dart';
 import 'package:darter/src/http.dart';
 import 'package:darter/src/parameters.dart';
 import 'package:logging/logging.dart';
 import 'package:darter/src/exceptions.dart';
+import 'package:darter/src/transformers.dart';
+import 'package:dartson/dartson.dart';
 
 class Processor {
   static final String CONTENT_TYPE_JSON = 'application/json; charset=UTF-8';
   final Logger _log = new Logger('Processor');
 
   Reflector _reflector = new Reflector();
-  Dartson _dson = new Dartson.JSON();
 
   Future<Response> processError(Request request, ApiErrorHandler error, Object exception) async {
     _log.fine("Processing Error. ${error}");
 
+    Transformer transformer = Transformer.create(request.getMediaType());
     Response result = new Response(statusCode: 200);
     var returned = _reflector.invoke(error.objectHandler, error.methodName, [exception]);
 
     if (returned.runtimeType == Response) {
       result.statusCode = returned.statusCode;
       result.headers.addAll(returned.headers);
-      result.body = _dson.encode(returned.entity);
+      result.body = transformer.transform(returned.entity);
     } else if (returned.runtimeType == String) {
       result.body = returned;
     } else {
-      result.body = _dson.encode(returned);
+      result.body = transformer.transform(returned);
     }
 
     _log.fine("Error: ${result}");
@@ -42,6 +43,7 @@ class Processor {
   Future<Response> process(Request request, ApiMethod method) async {
     _log.fine("Processing request: ${request}");
 
+    Transformer transformer = Transformer.create(request.getMediaType());
     Response result = new Response(statusCode: -1, headers: new Map());
 
     if (method == null) {
@@ -62,11 +64,16 @@ class Processor {
           _log.fine("Adding headers from API method.");
           result.headers.addAll(returned.headers);
         }
-        result.body = _dson.encode(returned.entity);
+
+        if (returned.entity != null) {
+          result.body = transformer.transform(returned.entity);
+        } else if (returned.body != null) {
+          result.body = returned.body;
+        }
       } else if (returned is Future) {
-        result.body = _dson.encode(await returned);
+        result.body = transformer.transform(await returned);
       } else {
-        result.body = _dson.encode(returned);
+        result.body = transformer.transform(returned);
       }
     }
 
@@ -80,21 +87,21 @@ class Processor {
       }
     }
 
-    _setContentHeaders(result, method);
+    _setContentHeaders(result, transformer.getMediaType());
 
     _log.fine("Response generated: ${result}");
 
     return result;
   }
 
-  void _setContentHeaders(Response response, ApiMethod apiMethod) {
-    if (apiMethod.produce != null) {
-      response.headers[HttpHeaders.CONTENT_TYPE] = apiMethod.produce;
+  void _setContentHeaders(Response response, String mediaType) {
+    if (mediaType != null) {
+      response.headers[HttpHeaders.CONTENT_TYPE] = mediaType;
     } else {
       response.headers[HttpHeaders.CONTENT_TYPE] = CONTENT_TYPE_JSON;
     }
 
-    if(response.body != null) {
+    if (response.body != null) {
       response.headers[HttpHeaders.CONTENT_LENGTH] = response.body.length.toString();
     } else {
       response.headers[HttpHeaders.CONTENT_LENGTH] = "0";
@@ -161,7 +168,7 @@ class Processor {
 
     if (body != null && !body.isEmpty) {
       try {
-        result = _dson.decode(body, result);
+        result = new Dartson.JSON().decode(body, result);
       } catch (e) {
         _log.severe("The incoming request body could not be transformed into the requested parameter. Error converting parameter [${param.name.toString()}] with type [${param.type.toString()}] from method [${apiMethod.name.toString()}].");
         throw new DarterException("The incoming request body could not be transformed into the requested parameter. Error converting parameter [${param.name.toString()}] with type [${param.type.toString()}] from method [${apiMethod.name.toString()}].");
