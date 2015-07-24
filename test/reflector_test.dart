@@ -56,6 +56,11 @@ void main() {
       expect(list[2], equals(3.0));
     });
 
+    test('getAnnotationFromType() correctly returns the annotation.', () {
+      AnnotatedClass anCls = new AnnotatedClass();
+      var c = reflector.getAnnotationFromType(AnnotatedClass, CryogenAnnotation);
+      expect(c, equals(new isInstanceOf<CryogenAnnotation>()));
+    });
   });
 
 }

@@ -16,13 +16,13 @@ class Parser {
   Reflector _reflector = new Reflector();
   final Logger _log = new Logger('Parser');
 
-  ApiInterceptor parseInterceptor(dynamic object) {
+  ApiInterceptor parseInterceptor(Type type) {
     ApiInterceptor result = new ApiInterceptor();
-    Interceptor annotation = _reflector.getAnnotation(object, Interceptor);
+    Interceptor annotation = _reflector.getAnnotationFromType(type, Interceptor);
 
     if (annotation != null) {
+      result.type = type;
       result.priority = annotation.priority;
-      result.object = object;
       result.when = annotation.when;
     }
 

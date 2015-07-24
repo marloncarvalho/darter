@@ -23,8 +23,8 @@ import 'package:logging/logging.dart';
 class Manager {
   final Logger _log = new Logger('Manager');
   static const API_NULL_VERSION = 'darter-null-version';
-  Chain _beforeChain = new Chain();
-  Chain _afterChain = new Chain();
+  ChainManager _beforeChain = new ChainManager();
+  ChainManager _afterChain = new ChainManager();
   Parser _parser = new Parser();
   Processor _processor = new Processor();
   Map<String, PathTree> _versions = new Map();
@@ -49,7 +49,6 @@ class Manager {
 
     if (!_versions.containsKey(api.version.version)) {
       _log.fine("DARTER/Manager - Version not cached yet. Creating it: ${api.version}");
-
       _versions[api.version.version] = new PathTree(new Path.fromString('/'));
     }
 
@@ -63,7 +62,7 @@ class Manager {
     api.children.forEach((Api child) => _register(child));
   }
 
-  void registerInterceptor(var interceptor) {
+  void registerInterceptor(Type interceptor) {
     ApiInterceptor apiInt = _parser.parseInterceptor(interceptor);
 
     if (apiInt.when == Interceptor.AFTER) {
@@ -75,7 +74,7 @@ class Manager {
     }
   }
 
-  List<ApiMethod> _getCandidatesMethods(Request request, ApiVersion version) {
+  List<ApiMethod> _findEligibleMethods(Request request, ApiVersion version) {
     List<ApiMethod> result = [];
 
     if (_versions.containsKey(version.version)) {
@@ -94,7 +93,7 @@ class Manager {
     return result;
   }
 
-  ApiMethod _getApiMethod(List<ApiMethod> candidatesMethods, Request request, ApiVersion version) {
+  ApiMethod _findApiMethod(List<ApiMethod> candidatesMethods, Request request, ApiVersion version) {
     var result = null;
 
     candidatesMethods.forEach((ApiMethod am) {
@@ -118,16 +117,16 @@ class Manager {
   Future<Response> handle(Request request) async {
     Response result = null;
     ApiVersion version = _extractVersion(request);
-    List<ApiMethod> candidatesMethods = _getCandidatesMethods(request, version);
-    ApiMethod apiMethod = _getApiMethod(candidatesMethods, request, version);
+    List<ApiMethod> eligibleMethods = _findEligibleMethods(request, version);
+    ApiMethod apiMethod = _findApiMethod(eligibleMethods, request, version);
 
     _log.fine("DARTER/Manager - API Method: ${apiMethod}.");
 
-    if (candidatesMethods.length > 0 && apiMethod == null) {
-      _log.fine("DARTER/Manager - Method found but with a method not allowed. Request: ${request}");
+    if (eligibleMethods.length > 0 && apiMethod == null) {
+      _log.fine("DARTER/Manager - API Method found but with a not allowed HTTP Method. Request: ${request}");
       result = _processor.processMethodNowAllowed();
     } else if (apiMethod == null) {
-      _log.fine("DARTER/Manager - No method found to handle request. Request: ${request}");
+      _log.fine("DARTER/Manager - No method found to handle this request. Request: ${request}");
       result = _processor.processNotFound();
     } else {
       if (!apiMethod.consumes.contains(request.headers[HttpHeaders.CONTENT_TYPE])) {
@@ -156,13 +155,15 @@ class Manager {
 
     try {
 
-      if (!_processBeforeInterceptors(request)) {
-        response = _beforeChain.respondWith;
+      Chain before = _processBeforeInterceptors(request);
+      if (before.aborted) {
+        response = before.respondWith;
       } else {
         response = await _processor.process(request, apiMethod);
-        if (!_processAfterInterceptors(request, response)) {
-          if (_afterChain.respondWith != null) {
-            response = _afterChain.respondWith;
+        Chain after = _processAfterInterceptors(request, response);
+        if (after.aborted) {
+          if (after.respondWith != null) {
+            response = after.respondWith;
           }
         }
       }
@@ -180,29 +181,17 @@ class Manager {
       }
     }
 
-    _afterChain.clear();
-    _beforeChain.clear();
-
     return response;
   }
 
-  bool _processBeforeInterceptors(Request request) {
+  Chain _processBeforeInterceptors(Request request) {
     _log.fine("DARTER/Manager - Processing Before Interceptors.");
-
-    _beforeChain.request = request;
-    _beforeChain.execute();
-
-    return !_beforeChain.aborted;
+    return _beforeChain.fire(request);
   }
 
-  bool _processAfterInterceptors(Request request, Response response) {
+  Chain _processAfterInterceptors(Request request, Response response) {
     _log.fine("DARTER/Manager - Processing After Interceptors.");
-
-    _afterChain.request = request;
-    _afterChain.response = response;
-    _afterChain.execute();
-
-    return !_afterChain.aborted;
+    return _afterChain.fire(request, response);
   }
 
   Future<Response> _handleError(Api api, Request request, Object exception) {

@@ -80,6 +80,22 @@ class Reflector {
     return result;
   }
 
+  Object getAnnotationFromType(Type type, Type annotationType) {
+    var result = null;
+    ClassMirror classMirror = reflectClass(type);
+
+    for (var instance in classMirror.metadata) {
+      if (instance.hasReflectee) {
+        if (instance.reflectee.runtimeType == annotationType) {
+          result = instance.reflectee;
+          break;
+        }
+      }
+    }
+
+    return result;
+  }
+
   bool existsMethod(Symbol method, dynamic object) {
     ClassMirror cm = reflectClass(object.runtimeType);
     bool result = false;

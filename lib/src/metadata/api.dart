@@ -22,14 +22,14 @@ class Api {
 }
 
 class ApiInterceptor {
-  dynamic object;
+  Type type;
   String when;
   int priority;
 
-  ApiInterceptor({this.object, this.when, this.priority});
+  ApiInterceptor({this.type, this.when, this.priority});
 
   String toString() {
-    return "Object: ${object}, When: ${when}, Priority: ${priority}";
+    return "Type: ${type}, When: ${when}, Priority: ${priority}";
   }
 }
 

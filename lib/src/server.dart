@@ -4,7 +4,6 @@ import 'dart:async';
 import 'dart:io' as io;
 import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf/shelf.dart' as shelf;
-import 'dart:convert' show UTF8;
 import 'package:darter/src/manager.dart';
 import 'package:darter/src/http.dart';
 import 'package:appengine/appengine.dart' as appengine;
@@ -50,17 +49,10 @@ class DarterServer {
   Future _handleIORequest(io.HttpRequest request) async {
     _log.info("DARTER/Server - Request: ${request.method} -> ${request.uri.toString()}");
 
-    String body = await request.transform(UTF8.decoder).join();
-
-    Request req = new Request(uri: request.uri.path, method: request.method, body: body);
-    req.queryParameters = request.uri.queryParameters;
-    request.headers.forEach((String name, List<String> list) => req.headers[name] = request.headers.value(name));
-
-    Response resp = await _handleRequest(req);
+    Response resp = await _handleRequest(await RequestBuilder.getBuilderFor(request).build(request));
     resp.headers.forEach((k, v) => request.response.headers.set(k, v));
     request.response.statusCode = resp.statusCode;
     request.response.write(resp.body);
-
     request.response.close();
   }
 
@@ -70,16 +62,9 @@ class DarterServer {
    * Create a Darter.Request object and hand it over to the manager.
    */
   Future<shelf.Response> _handleShelfRequest(shelf.Request request) async {
-    _log.info("DARTER/Server - Incoming Request: ${request.method} -> ${request.url.toString()}");
-
-    String body = await request.readAsString();
-
-    Request req = new Request(uri: request.url.path, method: request.method, body: body);
-    req.queryParameters = request.url.queryParameters;
-    req.headers = request.headers;
-    Response resp = await _handleRequest(req);
-
-    return new shelf.Response(resp.statusCode, body: (resp.body != null ? resp.body : ''), headers: resp.headers);
+    _log.info("DARTER/Server - Request: [${request.method}] -> ${request.url.toString()}");
+    Response response = await _handleRequest(await RequestBuilder.getBuilderFor(request).build(request));
+    return new shelf.Response(response.statusCode, body: (response.body != null ? response.body : ''), headers: response.headers);
   }
 
   /**
@@ -90,7 +75,6 @@ class DarterServer {
    */
   void addApi(var api) {
     _log.fine("DARTER/Server - New API registered on DarterServer. ${api.runtimeType}");
-
     _manager.registerAPI(api);
   }
 
@@ -100,9 +84,8 @@ class DarterServer {
    * This object must be an instance of a class annotated with `@Interceptor`, otherwise,
    * it will throw an exception.
    */
-  void addInterceptor(var interceptor) {
+  void addInterceptor(Type interceptor) {
     _log.fine("DARTER/Server - New INTERCEPTOR registered on DarterServer. ${interceptor.runtimeType}");
-
     _manager.registerInterceptor(interceptor);
   }
 
